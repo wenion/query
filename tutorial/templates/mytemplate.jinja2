@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>KMASS</title>
+    <style>
+    footer {
+      position: relative;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+    }
+    </style>
+  </head>
+  <body>
+    <h1>Welcome to KMASS</h1>
+    <form action="/search" method="get" id="query">
+        <input type="text" id="q" name="q" placeholder="Search...">
+        <input type="submit" value="Search">
+    </form>
+    <hr>
+    <h3>query: {{ querying }}</h3>
+    <h3>document id:</h3>
+    <ul>
+      {% for item in results %}
+      <li>
+        {{ item }}
+      </li>
+      {% endfor %}
+    </ul>
+    <h3>content:</h3>
+    <ul>
+      {% for key in content %}
+      <li>
+        <h3>{{ key }}</h3>
+        <p>{{ content[key] }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+  </body>
+  <footer>&copy; Copyright © 2023 CoLAM</footer>
+</html>
