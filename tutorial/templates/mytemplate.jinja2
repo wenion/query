@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>KMASS</title>
     <style>
+    #q {
+      max-width: 50%;
+    }
     footer {
       position: relative;
       left: 0;
@@ -15,7 +18,9 @@
     </style>
   </head>
   <body>
-    <h1>Welcome to KMASS</h1>
+    <a href="/">
+      <h1>Welcome to KMASS</h1>
+    </a>
     <form action="/search" method="get" id="query">
         <input type="text" id="q" name="q" placeholder="Search...">
         <input type="submit" value="Search">
