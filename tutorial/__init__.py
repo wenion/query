@@ -3,6 +3,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
+import random
 import sys
 sys.path.insert(0, '/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/NCI_model')
 from infer import *
@@ -55,13 +56,40 @@ def query(request):
     querying = request.params.get("q")
     # print('Incoming request', querying)
     # results = inference(querying, tokenizer, model, kid_content_dict, args)
+    if querying is None or len(querying) == 0:
+        return {
+            'querying': "",
+            'results': [],
+            'content': {},
+        }
     results, content = inference(
         querying,
         request.registry['tokenizer'],
         request.registry['model'],
         request.registry['kid_content_dict'],
         request.registry['args'])
+
+    test_result = []
+    links = [
+        'https://en.wikipedia.org/wiki/Zerelda_Mimms',
+        'https://en.wikipedia.org/wiki/Ally_McBeal',
+        'https://en.wikipedia.org/wiki/%C5%9Av%C4%93t%C4%81mbara'
+        ]
+
+    for item in content:
+        random.shuffle(links)
+        test_result.append({
+                "data_type": 'html',
+                "title": content[item].split(' ')[0],
+                "context": content[item][0:200] + '...',
+                "author": '',
+                "url": links[1]
+            })
+
     return {
+        'total': len(results),
+        "query": querying,
+        "rows": test_result,
         'querying': querying,
         'results': results,
         'content': content,
@@ -70,6 +98,12 @@ def query(request):
 @view_config(route_name='search', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
 def search(request):
     querying = request.params.get("q")
+    if querying is None or len(querying) == 0:
+        return {
+            'querying': "",
+            'results': [],
+            'content': {},
+        }
     # print('Incoming request', querying)
     # results = inference(querying, tokenizer, model, kid_content_dict, args)
     results, content = inference(
