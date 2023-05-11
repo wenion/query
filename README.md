@@ -7,8 +7,9 @@ conda info
 
 ### Updating an environment
 
-### myclone - new environment/myenv existing environment
 conda create --name myclone --clone myenv
+* myclone - new environment
+* myenv - existing environment
 
 conda list -n myenv
 
