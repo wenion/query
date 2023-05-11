@@ -1,25 +1,25 @@
-### Conda command
+## Conda command
 conda env create -f environment.yml
 conda env list
 conda activate myenv
 
 conda info
 
-## Updating an environment
+### Updating an environment
 
-## myclone - new environment/myenv existing environment
+### myclone - new environment/myenv existing environment
 conda create --name myclone --clone myenv
 
 conda list -n myenv
 
 conda env remove --name myenv
 
-## Installing packages
+### Installing packages
 conda install --name myenv scipy
 conda install scipy=0.15.0
 conda install scipy curl
 
-### project structure
+## project structure
 NCI_model
 |- main.py
 |- infer.py
@@ -32,7 +32,7 @@ NCI_model
       |- templates
          |- mytemplate.jinja2
 
-### install requirements
+## install requirements
 python3 -m pip install -r requirements/requirements.txt
 
 ### runing console screen
