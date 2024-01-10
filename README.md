@@ -41,3 +41,7 @@ screen -S xxx 是创建窗口
 screen -ls 看现在有的窗口
 screen -r xxx是打开已有的窗口
 如果说那个被开启了 可以用screen -r -d xxx
+
+python3 -m pip install -r requirements.in
+pip install -e .
+python3 -m venv venv
