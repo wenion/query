@@ -3,6 +3,18 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import pandas as pd
+from datetime import datetime, timedelta
+import numpy as np
+import pickle
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 import random
 import sys
 # sys.path.insert(0, '/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/NCI_model')
@@ -119,6 +131,81 @@ def query(request):
 #         'content': content,
 #     }
 
+@view_config(route_name="task_classification", request_method="POST", renderer="json")
+def task_classification(request):
+    if "trace_data" in request.POST:
+        csv_file = request.POST["trace_data"].file
+        trace = pd.read_csv(csv_file)
+    if "time_delta_in_minute" in request.POST:
+        time_delta_in_minute = request.POST["time_delta_in_minute"]
+    else:
+        time_delta_in_minute = 1
+    print(trace.head(2))
+    print(time_delta_in_minute)
+    if trace is None or len(trace) == 0:
+        return {
+            "task_name": "",
+            "certainty": 0
+        }
+    print('Incoming request', trace)
+    target_events = ['open', 'scroll', 'beforeunload', 'click-submit', 'submit-text', 'submit-checkbox', 'click-button', 'click-href', 'submit-textArea', 'submit-select', 'select', 'click-input', 'sever-record']
+    stop_words = set(stopwords.words('english'))
+    print(type(trace))
+    # converting timestamp
+    trace["timestamp"] = pd.to_datetime(trace["timestamp"], unit="ms")
+    # get current time
+    current_time = datetime.now()
+    # Convert current time to a timestamp
+    current_timestamp = current_time.timestamp()
+    # get [time_delta_in_minute] ago
+    ago = current_time - timedelta(minutes=time_delta_in_minute)
+    records = trace[(trace["timestamp"] >= ago) & (trace["timestamp"] <= current_time)]
+    # records = trace.iloc[24:71] # for testing
+    # get the attributes
+    no_events = len(records)
+    no_unique_events = len(records["event_type"].unique())
+    no_unique_tags = len(records["tag_name"].unique())
+    avg_time_between_operations = records["timestamp"].diff().dt.total_seconds().dropna()
+    counts = records["event_type"].value_counts()
+    dt = [no_events, no_unique_events, no_unique_tags, avg_time_between_operations.mean(),
+          avg_time_between_operations.std()] + [counts[val] if val in counts else 0 for val in target_events]
+    if np.isnan(dt).any():
+        return {
+            "task_name": "",
+            "certainty": 0
+        }
+    data = [dt]
+    # contextual features
+    context_info = records[
+        (records["tag_name"].isin(["INPUT", "BUTTON"])) & (records["text_content"].str.isdigit() == False) & (
+                    records["text_content"] != "")]
+    context_data = []
+    if context_info.empty:
+        context_data.append("Unavailable")
+    else:
+        context_data.append(context_info["text_content"].str.cat(sep=".").replace("\n", "").strip())
+
+    updated_context_data = []
+    for val in context_data:
+        tokens = word_tokenize(val)
+        tokens = [t for t in tokens if t not in stop_words]
+        updated_context_data.append(" ".join(tokens))
+
+    # load vectorizer
+    with open("model/context_vectorizer.pkl", "rb") as f:
+        vectorizer = pickle.load(f)
+    transformed_context_data = vectorizer.transform(updated_context_data)
+
+    combined_data = [data[0] + list(transformed_context_data[0].toarray()[0])]
+
+    # load task model
+    with open("model/task_model.pkl", "rb") as f:
+        task_model = pickle.load(f)
+
+    pred = task_model.predict(combined_data)[0]
+    prob = task_model.predict_proba(combined_data)[0]
+    return {"task_name": pred, "certainty": max(prob)}
+
 
 def main(global_config, **settings):
     # args = parsers_parser_web(settings)
@@ -155,5 +242,6 @@ def main(global_config, **settings):
     config.add_route('query', 'query')
     config.add_route('search', 'search')
     config.add_route('hello', '/')
+    config.add_route("task_classification", "task_classification")
     config.scan()
     return config.make_wsgi_app()
