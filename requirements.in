@@ -1,3 +1,12 @@
 pyramid
 pyramid-jinja2
 waitress
+sqlalchemy
+psycopg2
+redis
+redis-om
+pytz
+nltk
+pandas
+numpy
+scikit-learn
