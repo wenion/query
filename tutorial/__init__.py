@@ -3,7 +3,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
-from tutorial.nosql import fetch_user_event
+from tutorial.nosql import fetch_user_event, fetch_all_user_event
 
 import nltk
 from nltk.corpus import stopwords
@@ -48,17 +48,22 @@ def query(request):
 #         'content': content,
 #     }
 
-@view_config(route_name="task_classification", request_method="POST", renderer="json")
+@view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    if "trace_data" in request.POST:
-        csv_file = request.POST["trace_data"].file
-        trace = pd.read_csv(csv_file)
-    if "time_delta_in_minute" in request.POST:
-        time_delta_in_minute = request.POST["time_delta_in_minute"]
+    if "userid" not in request.params:
+        return {
+            "task_name": "",
+            "certainty": 0
+        }
+    user_id = request.params.get("userid")
+    result = fetch_all_user_event(user_id, "timestamp")
+    trace = pd.DataFrame(result["table_result"])
+
+    if "time_delta_in_minute" in request.params:
+        time_delta_in_minute = request.params.get("time_delta_in_minute")
     else:
         time_delta_in_minute = 1
-    print(trace.head(2))
-    print(time_delta_in_minute)
+
     if trace is None or len(trace) == 0:
         return {
             "task_name": "",
