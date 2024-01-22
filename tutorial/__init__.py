@@ -8,8 +8,11 @@ import random
 import sys
 import os
 import shutil
+#from ruamel import yaml
 sys.path.insert(0, '/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/Data_KMASS/all_data')
 from main import *
+from gen_retrieval import *
+#import gen_retrieval
 
 class Document:
     def __init__(self, page_content, metadata):
@@ -27,6 +30,13 @@ def query(request):
     querying = request.params.get("q")
     topics = []
     status = '200'
+
+    # dsi
+    print("querying", querying)
+    test_query = 'What are the key factors to consider when designing a PowerPoint presentation layout?'
+    dsi = request.registry['dsi']
+    dsi_results = dsi.gen_id(test_query)
+    print("dsi", dsi_results)
 
     response = {
         'status': status,
@@ -183,9 +193,11 @@ def delete(request):
 def main(global_config, **settings):
     # kn = Knowledge_Nuggest(['PolicyBank-pdf', 'TeachHQ-video', 'ExaminerReport-json'])
     kn = KN()
+    dsi_model = DSI()
 
     config = Configurator(settings=settings)
     config.registry["kn"] = kn
+    config.registry["dsi"] = dsi_model
 
     config.include("pyramid_jinja2")
     config.add_route('query', 'query')
