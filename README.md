@@ -16,8 +16,11 @@ conda list -n myenv
 conda env remove --name myenv
 
 ### Installing packages
+
 conda install --name myenv scipy
+
 conda install scipy=0.15.0
+
 conda install scipy curl
 
 ## project structure
@@ -34,10 +37,19 @@ NCI_model
          |- mytemplate.jinja2
 
 ## install requirements
+
 python3 -m pip install -r requirements/requirements.txt
 
 ### runing console screen
+
 screen -S xxx 是创建窗口
+
 screen -ls 看现在有的窗口
+
 screen -r xxx是打开已有的窗口
+
 如果说那个被开启了 可以用screen -r -d xxx
+
+### run
+
+pserve query/development.ini
