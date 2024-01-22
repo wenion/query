@@ -26,6 +26,11 @@
         <input type="submit" value="Search">
     </form>
     <hr>
+    <form action="/upload" method="post" id="upload" enctype="multipart/form-data">
+        <input type="file" id="myFile" name="myFile">
+        <input type="submit" value="Submit">
+    </form>
+    <hr>
     <h3>query: {{ querying }}</h3>
     <h3>document id:</h3>
     <ul>

@@ -6,8 +6,15 @@ from pyramid.renderers import JSONP
 import json
 import random
 import sys
+import os
+import shutil
 sys.path.insert(0, '/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/Data_KMASS/all_data')
 from main import *
+
+class Document:
+    def __init__(self, page_content, metadata):
+        self.page_content = page_content
+        self.metadata = metadata
 
 
 @view_config(route_name='hello', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
@@ -21,52 +28,58 @@ def query(request):
     topics = []
     status = '200'
 
-    # response = {
-    #     'status': status,
-    #     'query': querying,
-    #     'context': topics,
-    # }
+    response = {
+        'status': status,
+        'query': querying,
+        'context': topics,
+    }
 
     # print('Incoming request', querying)
     if querying is None or len(querying) == 0:
         return response
-    
-    # kn = request.registry['kn']
-    # querying_list = []
-    # querying_list.append(querying)
-    # try:
-    #     response_list = kn.query_retrieval(querying_list)
-    # except Exception as e:
-    #     status = str(e)
+
+    kn = request.registry['kn']
+    querying_list = []
+    querying_list.append(querying)
+    try:
+        response_list = kn.query_retrieval(querying_list)
+    except Exception as e:
+        status = str(e)
     # print('response_list', response_list)
 
-    # count = 0
-    # for topic in response_list:
-    #     # print('topic id ', count)
-    #     results = []
-    #     rcount = 0
-    #     for result in topic:
-    #         item = {
-    #             'id': rcount,
-    #             'page_content': result.page_content,
-    #             'metadata': result.metadata,
-    #         }
-    #         results.append(item)
-    #         # print('result id ', rcount, result, type(result.metadata), item, '\n')
-    #         rcount += 1
-    #     topics.append(results)
-    #     count += 1
-    #     # print('\n\n')
-    status = "openai.error.RateLimitError: You exceeded your current quota, please check your plan and billing details."
-    status = "200"
+    count = 0
+    for topic in response_list:
+        # print('topic id ', count)
+        results = []
+        rcount = 0
+        # for result in topic:
+        for item in topic:
+            document_tuple = item # document format:
+            document = document_tuple[0]
+            score = document_tuple[1]
 
-    response = {"status": status, "query": "Who was the target of the failed \"Bomb Plot\" of 1944", "context": [[{"page_content": "## The quiz has ended.\n You will not be able to attempt questions. \nYou are working in a team that is developing a World War II-related game.\nThe former leader of the Soviet Union, Joseph Stalin, had multiple political decoys (body double) when he was ruling the Country. These decoys usually pretend to be him to inspect the frontlines, visit the factories, as well as give out speeches to the public for him. However, ONLY Stalin himself had the power to decide important things, such as:\nDispatch the Red Army, \nMeet with the Allies leaders, \nSign treaties with other Countries, and \nDeclare war against the Axis. \nStalin must do these things on his own instead of relying on his body doubles. He can also do everything that his decoys can do. \nYour colleague is responsible for designing the relationship between Stalin and his decoys (Rashid and Dadaev), who presented a UML class diagram during the team meeting. However, you found out that there is something wrong with this design. The UML class diagram is shown below. \nQuestion 1\nConsidering this UML class diagram, explain what SOLID principles have been violated and why? \nQuestion 2\nSuggest improvements that could be made to this design, based on the principles of good design we have discussed in FIT2099, describe one way to improve the design, and also specify the methods to be inherited by or declared in each component.", "metadata": {"url": "https://edstem.org/au/courses/8750/lessons/23025/slides/174823", "heading": "FIT2099 S2 2022 - Class activities (~50 minutes) - Quiz: Design Critique 1"}}, {"page_content": "You are working in a team that is developing a World War II-related game.\nThe former leader of the Soviet Union, Joseph Stalin, had multiple political decoys (body double) when he was ruling the Country. These decoys usually pretend to be him to inspect the frontlines, visit the factories, as well as give out speeches to the public for him. However, ONLY Stalin himself had the power to decide important things, such as:\nDispatch the Red Army, \nMeet with the Allies leaders, \nSign treaties with other Countries, and \nDeclare war against the Axis. \nStalin must do these things on his own instead of relying on his body doubles. He can also do everything that his decoys can do. \nYour colleague is responsible for designing the relationship between Stalin and his decoys (Rashid and Dadaev), who presented a UML class diagram during the team meeting. However, you found out that there is something wrong with this design. The UML class diagram is shown below. \nQuestion 1\nConsidering this UML class diagram, explain what SOLID principles have been violated and why? \nParagraph\nSubmit\nQuestion 2\nSuggest improvements that could be made to this design, based on the principles of good design we have discussed in FIT2099, describe one way to improve the design, and also specify the methods to be inherited by or declared in each component.\nParagraph\nSubmit", "metadata": {"url": "https://edstem.org/au/courses/10098/lessons/27857/slides/196705", "heading": "FIT2099 Nov 2022 - Class activities (~50 minutes) - Quiz: Design Critique 1"}}, {"page_content": "\u25c0\ufe0eWeek 4\nWeek 6\u25b6\ufe0e\nWeek 5\nMid-semester situation update by teams\nHidden from students\nGuest lecture series\nSpeaker: Prof. Mark Andrejevic\nTitle: The Impact of Automated Targeting of News and Media on Democracy\nAbstract: This talk focuses on the ways in which the automated curation of news, information, and culture online helps reinforce social fragmentation. I start by comparing the mass media era with a media system in which customized content is delivered to personal devices. I then consider recent arguments about the relationship between so called \u201cgeneral interest intermediaries\u201d \u2013 such as mass circulation newspapers and broadcasts \u2013 and civic life. These arguments suggest that the micro-targeting of news and information has the potential to undermine the \u201cdisposition\u201d necessary for democratic self-governance. I provide some familiar critiques of the impacts of social media on civic discourse and suggest that the fragmentation of culture more generally should be taken into consideration. I conclude by highlighting some approaches for holding media platforms accountable for the impact of the commercial customization of media content.\nBio: Mark Andrejevic is Professor in the School of Media, Film, and Journalism. He is also a Chief Investigator in the ARC Centre of Execellence for Automated Decision Making and Society. He is the author of numerous articles and four books, including, most recently: Automated Media. His co-authored book on the social impact of facial recognition technology will be published in July.\nLecture recording\nURL\nIntroduction to Agile and Scrum\nAbstract\nThis session will provide a brief overview of working with agility and how to run a project using the scrum framework.\nSpeaker\nPete Woolley, Manager\nDeloitte Digital Agile & Delivery Lead\nMelbourne\npewoolley@deloitte.com.au\nBio\nPete is an experienced delivery lead, specialising in leading teams building digital solutions utilising agile practices over the past 9 years. He is skilled in managing across the delivery team, from design, through build & test, and onto ensuring a smooth transition into deployment. Pete has managed the delivery of digital projects across a range of client industries and geographies.\nPete is currently fulfilling the role of Delivery Director for a Victorian government digital transformation project, managing a large Deloitte team delivering across multiple technologies and platforms.\nHidden from students\nFIT4002 guest speaker - Lawrence Macdonald\nURL\nHidden from students\nWarning: large file download (~775Mb .w4v)\nSeminar recording\nURL\nHidden from students\nPreliminary Teaching Evaluation Feedback form (iSETU)\nHidden from students\n\u25c0\ufe0eWeek 4\nWeek 6\u25b6\ufe0e", "metadata": {"url": "https://lms.monash.edu/course/view.php?id=135538&section=10", "heading": "FIT4002 Software engineering industry experience studio project - FY 2022 - Week 5"}}, {"page_content": "Untitled", "metadata": {"url": "https://edstem.org/au/courses/10696/lessons/31360/slides/235327.mp4", "heading": "FIT9136 S1 2023 - Workshop Activities - Untitled"}}]]}
+            page_content = document.page_content
+            metadata = document.metadata
+            metadata["score"] = str(score)
 
-    # response['status'] = status
-    # response['context'] = topics
-    # print('response', response)
+            item = {
+                'id': rcount,
+                # 'page_content': result.page_content,
+                'page_content': page_content,
+                'metadata': metadata,
+            }
+            results.append(item)
+            # print('result id ', rcount, result, type(result.metadata), item, '\n')
+            rcount += 1
+        topics.append(results)
+        count += 1
+        # print('\n\n')
+    # status = "openai.error.RateLimitError: You exceeded your current quota, please check your plan and billing details."
+    # status = "200"
+
+    response['status'] = status
+    response['context'] = topics
     return response
-
 
 # @view_config(route_name='search', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
 # def search(request):
@@ -85,16 +98,103 @@ def query(request):
 #         'content': content,
 #     }
 
+@view_config(route_name='upload', request_method='POST', renderer='json')
+def upload(request):
+    kn = request.registry['kn']
+    print("start upload request.POST", request.POST)
+
+    try:
+        if request.POST['myFile'] is None:
+            return {"status": 404, "message": "myFile is empty"}
+        filename = request.POST['myFile'].filename
+        input_file = request.POST['myFile'].file
+        url = request.POST.get("url")
+        print("request.POST", url)
+    except Exception as e:
+        return {"status": 404, "message": repr(e)}
+
+    file_type = "document"
+
+    print("filename", filename, "input_file", input_file, "url", url)
+
+    if filename.endswith(".pdf"):
+        target_path = os.path.join(os.getcwd(), "new-pdf")
+    elif filename.endswith(".mp4"):
+        target_path = os.path.join(os.getcwd(), "new-video")
+        file_type = "video"
+    else:
+        target_path = os.path.join(os.getcwd(), "other")
+        file_type = "other"
+
+    file_path = os.path.join(target_path, filename)
+
+    if not os.path.exists(target_path):
+        os.mkdir(target_path)
+
+    if os.path.exists(file_path):
+        return {"status": 303, "message": "reason:\n" + filename + " already exists in remote"}
+
+    try:
+        with open(file_path, 'wb') as output_file:
+            shutil.copyfileobj(input_file, output_file)
+    except Exception as e:
+        return {"status": 404, "message": repr(e)}
+
+    print("file_path", file_path, "url", url, "file_type", file_type)
+
+    if os.path.exists(file_path):
+        try:
+            ret = kn.nuggest_update(file_list=[file_path,], url_list=[url,], file_type=file_type)
+            # ret = 1
+        except Exception as e:
+            return {"status":304, "message": "[the ingestion failed] reason:\n" + repr(e)}
+        else:
+            if ret == 1:
+                print("succ")
+                return {'status':200, "message": filename + ' has been saved in' + target_path}
+            else:
+                return {"status":304, "message": "[the ingestion failed] reason: return -1"}
+
+    return {"status":404, "message": "file_path "+ file_path + "does not exist"}
+
+
+@view_config(route_name='delete', request_method='POST', renderer='json')
+def delete(request):
+    filename = request.POST.get("filename")
+    filetype = request.POST.get("filetype")
+    print("filename", filename, "filetype", filetype)
+    if filetype == ".mp4":
+        file_path = os.path.join(os.getcwd(), "new-video")
+    elif filetype == ".pdf":
+        file_path = os.path.join(os.getcwd(), "new-pdf")
+    else:
+        file_path = os.path.join(os.getcwd(), "other")
+    try:
+        file_path = os.path.join(file_path, filename)
+        print("file_path", file_path)
+        if os.path.exists(file_path):
+            print("find file_path:", file_path)
+            # os.remove(file_path)
+    except Exception as e:
+        print("error" + repr(e))
+        return {"error", repr(e)}
+    return {"succ": "delete "}
 
 def main(global_config, **settings):
-    # kn = Knowledge_Nuggest(['Jira-pdf', 'PolicyBank-pdf', 'TeachHQ-video','Panopto-video', 'Ed-json', 'ExaminerReport-json', 'MEA-json', 'Moodle-json', 'TeachHQ-json'])
+    # kn = Knowledge_Nuggest(['PolicyBank-pdf', 'TeachHQ-video', 'ExaminerReport-json'])
+    kn = KN()
 
     config = Configurator(settings=settings)
-    # config.registry["kn"] = kn
+    config.registry["kn"] = kn
 
     config.include("pyramid_jinja2")
     config.add_route('query', 'query')
     config.add_route('search', 'search')
     config.add_route('hello', '/')
+    config.add_route('upload', '/upload')
+    config.add_route('delete', '/delete')
     config.scan()
+
+    # kn.nuggest_update(file_list=["/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/Data_KMASS/all_data/new-video/20230611-1626-03.4924826.mp4",], url_list=["https://colam.kmass.cloud.edu.au/video?file=http://localhost:8080/static/admin/20230611-1626-03.4924826.mp4",], file_type="video")
+    # kn.nuggest_update(file_list=["/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/Data_KMASS/all_data/new-video/2.mp4",], url_list=["https://colam.kmass.cloud.edu.au/video?file=http://localhost:8080/static/admin/20230611-1626-03.4924826.mp4",], file_type="video")
     return config.make_wsgi_app()
