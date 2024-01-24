@@ -53,7 +53,8 @@ def task_classification(request):
     if "userid" not in request.params:
         return {
             "task_name": "",
-            "certainty": 0
+            "certainty": 0,
+            "message": ""
         }
     user_id = request.params.get("userid")
     result = fetch_all_user_event(user_id, "timestamp")
@@ -67,7 +68,8 @@ def task_classification(request):
     if trace is None or len(trace) == 0:
         return {
             "task_name": "",
-            "certainty": 0
+            "certainty": 0,
+            "message": ""
         }
     print('Incoming request', trace)
     target_events = ['open', 'scroll', 'beforeunload', 'click-submit', 'submit-text', 'submit-checkbox', 'click-button', 'click-href', 'submit-textArea', 'submit-select', 'select', 'click-input', 'sever-record']
@@ -94,7 +96,8 @@ def task_classification(request):
     if np.isnan(dt).any():
         return {
             "task_name": "",
-            "certainty": 0
+            "certainty": 0,
+            "message": ""
         }
     data = [dt]
     # contextual features
