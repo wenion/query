@@ -126,7 +126,7 @@ def task_classification(request):
 
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
-    return {"task_name": pred, "certainty": max(prob)}
+    return {"task_name": pred, "certainty": max(prob), "message": f"GoldMine detects that you are working on {pred}. "}
 
 
 def main(global_config, **settings):
