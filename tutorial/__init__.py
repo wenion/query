@@ -143,7 +143,7 @@ def task_classification(request):
     return {
         "task_name": pred,
         "certainty": max(prob),
-        "message": f"You are currently detected to be working on task <strong>{pred}</strong>. Here's prior captured expert trace: {expert_trace_dict[pred]}"
+        "message": f"You are currently detected to be working on task {pred}. Here's prior captured expert trace: {expert_trace_dict[pred]}"
     }
 
 
