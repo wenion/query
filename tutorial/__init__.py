@@ -71,10 +71,8 @@ def task_classification(request):
             "certainty": 0,
             "message": ""
         }
-    print('Incoming request', trace)
     target_events = ['open', 'scroll', 'beforeunload', 'click-submit', 'submit-text', 'submit-checkbox', 'click-button', 'click-href', 'submit-textArea', 'submit-select', 'select', 'click-input', 'sever-record']
     stop_words = set(stopwords.words('english'))
-    print(type(trace))
     # converting timestamp
     trace["timestamp"] = pd.to_datetime(trace["timestamp"], unit="ms")
     # get current time
