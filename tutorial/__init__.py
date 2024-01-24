@@ -129,7 +129,7 @@ def task_classification(request):
 
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
-    if prob <= 0.8:
+    if max(prob) <= 0.8:
         return {
             "task_name": "",
             "certainty": 0,
