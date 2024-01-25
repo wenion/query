@@ -1,6 +1,9 @@
 ## Conda command
+
 conda env create -f environment.yml
+
 conda env list
+
 conda activate myenv
 
 conda info
