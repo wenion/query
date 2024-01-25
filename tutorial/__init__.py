@@ -128,7 +128,7 @@ def task_classification(request):
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
     print(user_id, pred, max(prob))
-    if max(prob) <= 0.8:
+    if max(prob) <= 0.75:
         return {
             "task_name": "",
             "certainty": 0,
@@ -143,7 +143,7 @@ def task_classification(request):
     return {
         "task_name": pred,
         "certainty": max(prob),
-        "message": f"You are currently detected to be working on task {pred}. Here's prior captured expert trace: {expert_trace_dict[pred]}"
+        "message": f"You are currently detected to be working on task <strong>{pred}</strong>. Here's prior captured expert trace: {expert_trace_dict[pred]}"
     }
 
 
