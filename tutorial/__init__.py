@@ -8,6 +8,7 @@ import random
 import sys
 import os
 import shutil
+import urllib.parse
 #from ruamel import yaml
 sys.path.insert(0, '/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/Data_KMASS/all_data')
 from main import *
@@ -32,11 +33,11 @@ def query(request):
     status = '200'
 
     # dsi
-    print("querying", querying)
-    test_query = 'What are the key factors to consider when designing a PowerPoint presentation layout?'
+    querying = urllib.parse.unquote(querying)
     dsi = request.registry['dsi']
-    dsi_results = dsi.gen_id(test_query)
+    dsi_results = dsi.gen_id(querying)
     print("dsi", dsi_results)
+    # dsi_results = ['Adding activities and resources_default.mp4']+ dsi_results
 
     response = {
         'status': status,
@@ -57,6 +58,7 @@ def query(request):
         status = str(e)
     # print('response_list', response_list)
 
+    priority_result = []
     count = 0
     for topic in response_list:
         # print('topic id ', count)
@@ -71,6 +73,7 @@ def query(request):
             page_content = document.page_content
             metadata = document.metadata
             metadata["score"] = str(score)
+            title = metadata["title"]
 
             item = {
                 'id': rcount,
@@ -78,9 +81,23 @@ def query(request):
                 'page_content': page_content,
                 'metadata': metadata,
             }
-            results.append(item)
+            
+            # if dsi results overlap with embedding results
+            if title in dsi_results:
+                priority_result.append(item)
+                dsi_results.remove(title)
+            else:
+                results.append(item)
             # print('result id ', rcount, result, type(result.metadata), item, '\n')
             rcount += 1
+
+        # merge dsi results, embedding results with results
+        post_dsi_results = []
+        for key, value in enumerate(dsi_results):
+            item = {'id':rcount + key, 'page_content': '', 'metadata':{'title': value, }}
+            post_dsi_results.append(item)
+        results = priority_result + results + post_dsi_results
+        print('len', len(results))
         topics.append(results)
         count += 1
         # print('\n\n')
