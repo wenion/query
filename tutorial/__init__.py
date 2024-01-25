@@ -128,12 +128,12 @@ def task_classification(request):
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
     print(user_id, pred, max(prob))
-    if max(prob) <= 0.75:
-        return {
-            "task_name": "",
-            "certainty": 0,
-            "message": ""
-        }
+    # if max(prob) <= 0.6:
+    #     return {
+    #         "task_name": "",
+    #         "certainty": 0,
+    #         "message": ""
+    #     }
     expert_trace_dict = {
         "TAD 1": "1. Click on Turn Editing On; 2. Scroll to the element that you want to edit; 3. Hover on the Edit to toggle the dropdown; 4. Click on Edit Setting",
         "TAD 2": "1. Click on Turn Editing On; 2. Scroll to the element that you want to edit; 3. Hover on the Edit to toggle the dropdown; 4. Click on Edit Setting",
