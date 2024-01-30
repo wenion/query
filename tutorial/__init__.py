@@ -128,7 +128,7 @@ def task_classification(request):
     pred = task_model.predict(data)[0]
     prob = task_model.predict_proba(data)[0]
     print(user_id, pred, max(prob))
-    if max(prob) <= 0.85:
+    if max(prob) <= 0.75:
         return {
             "task_name": "",
             "certainty": 0,
