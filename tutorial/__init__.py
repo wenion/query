@@ -60,10 +60,10 @@ def task_classification(request):
     result = fetch_all_user_event(user_id, "timestamp")
     trace = pd.DataFrame(result["table_result"])
 
-    if "time_delta_in_minute" in request.params:
-        time_delta_in_minute = request.params.get("time_delta_in_minute")
+    if "time_delta_in_second" in request.params:
+        time_delta_in_second = request.params.get("time_delta_in_second")
     else:
-        time_delta_in_minute = 1
+        time_delta_in_second = 15
 
     if trace is None or len(trace) == 0:
         return {
@@ -80,7 +80,7 @@ def task_classification(request):
     # Convert current time to a timestamp
     current_timestamp = current_time.timestamp()
     # get [time_delta_in_minute] ago
-    ago = current_time - timedelta(minutes=time_delta_in_minute)
+    ago = current_time - timedelta(seconds=time_delta_in_second)
     records = trace[(trace["timestamp"] >= ago) & (trace["timestamp"] <= current_time)]
     # records = trace.iloc[24:71] # for testing
     # get the attributes
