@@ -71,7 +71,7 @@ def task_classification(request):
             "certainty": 0,
             "message": ""
         }
-    target_events = ['open', 'scroll', 'beforeunload', 'click-submit', 'submit-text', 'submit-checkbox', 'click-button', 'click-href', 'submit-textArea', 'submit-select', 'select', 'click-input', 'sever-record']
+    target_events = ['beforeunload', 'click', 'keydown', 'scroll', 'select', 'submit']
     stop_words = set(stopwords.words('english'))
     # converting timestamp
     trace["timestamp"] = pd.to_datetime(trace["timestamp"], unit="ms")
@@ -98,46 +98,46 @@ def task_classification(request):
             "message": ""
         }
     data = [dt]
-    # contextual features
-    context_info = records[
-        (records["tag_name"].isin(["INPUT", "BUTTON"])) & (records["text_content"].str.isdigit() == False) & (
-                    records["text_content"] != "")]
-    context_data = []
-    if context_info.empty:
-        context_data.append("Unavailable")
-    else:
-        context_data.append(context_info["text_content"].str.cat(sep=".").replace("\n", "").strip())
-
-    updated_context_data = []
-    for val in context_data:
-        tokens = word_tokenize(val)
-        tokens = [t for t in tokens if t not in stop_words]
-        updated_context_data.append(" ".join(tokens))
-
-    # load vectorizer
-    with open("model/context_vectorizer.pkl", "rb") as f:
-        vectorizer = pickle.load(f)
-    transformed_context_data = vectorizer.transform(updated_context_data)
-
-    combined_data = [data[0] + list(transformed_context_data[0].toarray()[0])]
+    # # contextual features
+    # context_info = records[
+    #     (records["tag_name"].isin(["INPUT", "BUTTON"])) & (records["text_content"].str.isdigit() == False) & (
+    #                 records["text_content"] != "")]
+    # context_data = []
+    # if context_info.empty:
+    #     context_data.append("Unavailable")
+    # else:
+    #     context_data.append(context_info["text_content"].str.cat(sep=".").replace("\n", "").strip())
+    #
+    # updated_context_data = []
+    # for val in context_data:
+    #     tokens = word_tokenize(val)
+    #     tokens = [t for t in tokens if t not in stop_words]
+    #     updated_context_data.append(" ".join(tokens))
+    #
+    # # load vectorizer
+    # with open("model/context_vectorizer.pkl", "rb") as f:
+    #     vectorizer = pickle.load(f)
+    # transformed_context_data = vectorizer.transform(updated_context_data)
+    #
+    # combined_data = [data[0] + list(transformed_context_data[0].toarray()[0])]
 
     # load task model
-    with open("model/task_model.pkl", "rb") as f:
+    with open("model/task_model_updated.pkl", "rb") as f:
         task_model = pickle.load(f)
 
-    pred = task_model.predict(combined_data)[0]
-    prob = task_model.predict_proba(combined_data)[0]
+    pred = task_model.predict(data)[0]
+    prob = task_model.predict_proba(data)[0]
     print(user_id, pred, max(prob))
-    if max(prob) <= 0.75:
+    if max(prob) <= 0.85:
         return {
             "task_name": "",
             "certainty": 0,
             "message": ""
         }
     expert_trace_dict = {
-        "TAD 1": "1. Click on Turn Editing On; 2. Scroll to the element that you want to edit; 3. Hover on the Edit to toggle the dropdown; 4. Click on Edit Setting",
-        "TAD 2": "1. Click on Turn Editing On; 2. Scroll to the element that you want to edit; 3. Hover on the Edit to toggle the dropdown; 4. Click on Edit Setting",
-        "TAD 3": "1. Click on Turn Editing On; 2. Scroll to the element that you want to edit; 3. Hover on the Edit to toggle the dropdown; 4. Click on Edit Setting",
+        "Adding Moodle Forum": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>Open Forum</strong> in the Activities</li><li>Fill in the forum details and select the desired forum type (e.g., Q and A Forum)</li><li>Scroll down to save your edits</li></ol>",
+        "Adding Moodle Resource": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>File</strong> (for media resource) or <strong>Label</strong> (for textual resource) in the Resources</li><li>Fill in the resource details</li><li>Scroll down to save your edits</li></ol>",
+        "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove\/Hide</strong> to delete/hide the information</li></ol>",
 
     }
     return {
