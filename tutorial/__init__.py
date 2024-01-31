@@ -63,7 +63,7 @@ def task_classification(request):
     if "time_delta_in_second" in request.params:
         time_delta_in_second = request.params.get("time_delta_in_second")
     else:
-        time_delta_in_second = 15
+        time_delta_in_second = 30
 
     if trace is None or len(trace) == 0:
         return {
