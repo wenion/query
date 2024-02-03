@@ -12,6 +12,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import numpy as np
 import pickle
+import urllib.parse
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
@@ -50,7 +51,7 @@ def query(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 20000}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 15000}
     if "userid" not in request.params:
         return invalid_result
     user_id = request.params.get("userid")
@@ -102,35 +103,46 @@ def task_classification(request):
         print("Invalid feature values")
         return invalid_result
     data = [dt]
-    # # contextual features
-    # context_info = records[
-    #     (records["tag_name"].isin(["INPUT", "BUTTON"])) & (records["text_content"].str.isdigit() == False) & (
-    #                 records["text_content"] != "")]
-    # context_data = []
-    # if context_info.empty:
-    #     context_data.append("Unavailable")
-    # else:
-    #     context_data.append(context_info["text_content"].str.cat(sep=".").replace("\n", "").strip())
-    #
-    # updated_context_data = []
-    # for val in context_data:
-    #     tokens = word_tokenize(val)
-    #     tokens = [t for t in tokens if t not in stop_words]
-    #     updated_context_data.append(" ".join(tokens))
-    #
-    # # load vectorizer
-    # with open("model/context_vectorizer.pkl", "rb") as f:
-    #     vectorizer = pickle.load(f)
-    # transformed_context_data = vectorizer.transform(updated_context_data)
-    #
-    # combined_data = [data[0] + list(transformed_context_data[0].toarray()[0])]
+    # contextual features
+    urls = records["base_url"].unique()
+    main_urls = set()
+    params = set()
+    for url in urls:
+        if "?" in url:
+            main, qs = url.split("?")
+            main_urls.add(main)
+            # Parse the URL string
+            parsed_url = urllib.parse.urlparse(url)
+            # Get the query parameters as a dictionary
+            query_params = urllib.parse.parse_qs(parsed_url.query)
+            for key in query_params.keys():
+                params.add(key)
+    context_info = records["text_content"].str.cat(sep=".").replace("\n", "").strip()
+    if len(context_info) == 0:
+        context_info = ""
+    for url in main_urls:
+        context_info += url + " "
+    for param in params:
+        context_info += param + " "
+
+
+    tokens = word_tokenize(context_info)
+    tokens = [t for t in tokens if t not in stop_words]
+    updated_context_info = " ".join(tokens)
+
+    # load vectorizer
+    with open("model/context_vectorizer.pkl", "rb") as f:
+        vectorizer = pickle.load(f)
+    transformed_context_data = vectorizer.transform([updated_context_info])
+
+    combined_data = [data[0] + list(transformed_context_data[0].toarray()[0])]
 
     # load task model
-    with open("model/task_model_updated.pkl", "rb") as f:
+    with open("model/task_model_with_context.pkl", "rb") as f:
         task_model = pickle.load(f)
 
-    pred = task_model.predict(data)[0]
-    prob = task_model.predict_proba(data)[0]
+    pred = task_model.predict(combined_data)[0]
+    prob = task_model.predict_proba(combined_data)[0]
     print(user_id, pred, max(prob))
     if max(prob) <= 0.75:
         return invalid_result
@@ -143,7 +155,7 @@ def task_classification(request):
     return {
         "task_name": pred,
         "certainty": max(prob),
-        "message": f"You are currently detected to be working on task <strong>{pred}</strong>.",
+        "message": f"You are currently detected to be working on task <strong>{pred}</strong>. See expert trace: {expert_trace_dict[pred]}",
         "interval": 15000
     }
 
