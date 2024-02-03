@@ -93,6 +93,7 @@ def task_classification(request):
     dt = [no_events, no_unique_events, no_unique_tags, avg_time_between_operations.mean(),
           avg_time_between_operations.std()] + [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
+        print(dt)
         print("Invalid feature values")
         return invalid_result
     data = [dt]
