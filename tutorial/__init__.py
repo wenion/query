@@ -50,27 +50,25 @@ def query(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 15000}
     if "userid" not in request.params:
-        return {
-            "task_name": "",
-            "certainty": 0,
-            "message": ""
-        }
+        return invalid_result
     user_id = request.params.get("userid")
     result = fetch_all_user_event(user_id, "timestamp")
     trace = pd.DataFrame(result["table_result"])
 
-    if "time_delta_in_second" in request.params:
-        time_delta_in_second = request.params.get("time_delta_in_second")
-    else:
-        time_delta_in_second = 30
+    interval = 15000
+    if "interval" in request.params:
+        interval = request.params.get("interval")
+
+    if interval == 0:
+        return invalid_result
+
+    time_delta_in_second = 15
 
     if trace is None or len(trace) == 0:
-        return {
-            "task_name": "",
-            "certainty": 0,
-            "message": ""
-        }
+        return invalid_result
+
     target_events = ['beforeunload', 'click', 'keydown', 'scroll', 'select', 'submit']
     stop_words = set(stopwords.words('english'))
     # converting timestamp
@@ -92,11 +90,7 @@ def task_classification(request):
     dt = [no_events, no_unique_events, no_unique_tags, avg_time_between_operations.mean(),
           avg_time_between_operations.std()] + [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
-        return {
-            "task_name": "",
-            "certainty": 0,
-            "message": ""
-        }
+        return invalid_result
     data = [dt]
     # # contextual features
     # context_info = records[
@@ -128,12 +122,8 @@ def task_classification(request):
     pred = task_model.predict(data)[0]
     prob = task_model.predict_proba(data)[0]
     print(user_id, pred, max(prob))
-    if max(prob) <= 0.95:
-        return {
-            "task_name": "",
-            "certainty": 0,
-            "message": ""
-        }
+    if max(prob) <= 0.75:
+        return invalid_result
     expert_trace_dict = {
         "Adding Moodle Forum": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>Open Forum</strong> in the Activities</li><li>Fill in the forum details and select the desired forum type (e.g., Q and A Forum)</li><li>Scroll down to save your edits</li></ol>",
         "Adding Moodle Resource": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>File</strong> (for media resource) or <strong>Label</strong> (for textual resource) in the Resources</li><li>Fill in the resource details</li><li>Scroll down to save your edits</li></ol>",
@@ -143,7 +133,8 @@ def task_classification(request):
     return {
         "task_name": pred,
         "certainty": max(prob),
-        "message": f"You are currently detected to be working on task <strong>{pred}</strong>."
+        "message": f"You are currently detected to be working on task <strong>{pred}</strong>.",
+        "interval": 15000
     }
 
 
