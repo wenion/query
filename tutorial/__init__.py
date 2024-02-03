@@ -50,14 +50,14 @@ def query(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 15000}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 20000}
     if "userid" not in request.params:
         return invalid_result
     user_id = request.params.get("userid")
     result = fetch_all_user_event(user_id, "timestamp")
     trace = pd.DataFrame(result["table_result"])
 
-    interval = 15000
+    interval = 20000
     if "interval" in request.params:
         interval = request.params.get("interval")
 
@@ -65,7 +65,7 @@ def task_classification(request):
         print("Invalid interval")
         return invalid_result
 
-    time_delta_in_second = 15
+    time_delta_in_second = 20
 
     if trace is None or len(trace) == 0:
         print("No trace found")
@@ -92,8 +92,12 @@ def task_classification(request):
     no_unique_tags = len(records["tag_name"].unique())
     avg_time_between_operations = records["timestamp"].diff().dt.total_seconds().dropna()
     counts = records["event_type"].value_counts()
-    dt = [no_events, no_unique_events, no_unique_tags, avg_time_between_operations.mean(),
-          avg_time_between_operations.std()] + [counts[val] if val in counts else 0 for val in target_events]
+    dt = [no_events, no_unique_events, no_unique_tags]
+    if len(avg_time_between_operations) == 0:
+        dt += [0, 0]
+    else:
+        dt += [avg_time_between_operations.mean(),avg_time_between_operations.std()]
+    dt += [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
         print("Invalid feature values")
         return invalid_result
