@@ -62,11 +62,13 @@ def task_classification(request):
         interval = request.params.get("interval")
 
     if interval == 0:
+        print("Invalid interval")
         return invalid_result
 
     time_delta_in_second = 15
 
     if trace is None or len(trace) == 0:
+        print("No trace found")
         return invalid_result
 
     target_events = ['beforeunload', 'click', 'keydown', 'scroll', 'select', 'submit']
@@ -90,6 +92,7 @@ def task_classification(request):
     dt = [no_events, no_unique_events, no_unique_tags, avg_time_between_operations.mean(),
           avg_time_between_operations.std()] + [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
+        print("Invalid feature values")
         return invalid_result
     data = [dt]
     # # contextual features
