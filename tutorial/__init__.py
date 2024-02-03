@@ -65,13 +65,13 @@ def task_classification(request):
         print("Invalid interval")
         return invalid_result
 
-    time_delta_in_second = 20
+    time_delta_in_second = 15
 
     if trace is None or len(trace) == 0:
         print("No trace found")
         return invalid_result
 
-    target_events = ['beforeunload', 'click', 'keydown', 'scroll', 'select', 'submit']
+    target_events = ['beforeunload', 'click', 'keydown', 'open', 'scroll', 'select', 'server-record', 'submit']
     stop_words = set(stopwords.words('english'))
     # converting timestamp
     trace["timestamp"] = pd.to_datetime(trace["timestamp"], unit="ms")
@@ -85,7 +85,6 @@ def task_classification(request):
     if records is None or len(records) == 0:
         print("No records found")
         return invalid_result
-    print(len(records))
     # records = trace.iloc[24:71] # for testing
     # get the attributes
     no_events = len(records)
