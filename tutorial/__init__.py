@@ -144,7 +144,7 @@ def task_classification(request):
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
     print(user_id, pred, max(prob))
-    if max(prob) <= 0.75:
+    if max(prob) <= 0.80:
         return invalid_result
     expert_trace_dict = {
         "Adding Moodle Forum": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>Open Forum</strong> in the Activities</li><li>Fill in the forum details and select the desired forum type (e.g., Q and A Forum)</li><li>Scroll down to save your edits</li></ol>",
