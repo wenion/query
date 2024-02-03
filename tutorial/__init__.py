@@ -82,6 +82,9 @@ def task_classification(request):
     # get [time_delta_in_minute] ago
     ago = current_time - timedelta(seconds=time_delta_in_second)
     records = trace[(trace["timestamp"] >= ago) & (trace["timestamp"] <= current_time)]
+    if records is None or len(records) == 0:
+        print("No records found")
+        return invalid_result
     # records = trace.iloc[24:71] # for testing
     # get the attributes
     no_events = len(records)
@@ -89,11 +92,9 @@ def task_classification(request):
     no_unique_tags = len(records["tag_name"].unique())
     avg_time_between_operations = records["timestamp"].diff().dt.total_seconds().dropna()
     counts = records["event_type"].value_counts()
-    print(avg_time_between_operations)
     dt = [no_events, no_unique_events, no_unique_tags, avg_time_between_operations.mean(),
           avg_time_between_operations.std()] + [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
-        print(dt)
         print("Invalid feature values")
         return invalid_result
     data = [dt]
