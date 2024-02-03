@@ -97,7 +97,7 @@ def task_classification(request):
     if len(avg_time_between_operations) == 0:
         dt += [0, 0]
     else:
-        dt += [avg_time_between_operations.mean(),avg_time_between_operations.std()]
+        dt += [avg_time_between_operations.mean(), avg_time_between_operations.std()]
     dt += [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
         print("Invalid feature values")
@@ -106,25 +106,28 @@ def task_classification(request):
     # contextual features
     urls = records["base_url"].unique()
     main_urls = set()
-    params = set()
+    param = set()
     for url in urls:
         if "?" in url:
             main, qs = url.split("?")
-            main_urls.add(main)
+            main_urls.add(main.split("/")[-1])
             # Parse the URL string
             parsed_url = urllib.parse.urlparse(url)
             # Get the query parameters as a dictionary
             query_params = urllib.parse.parse_qs(parsed_url.query)
             for key in query_params.keys():
-                params.add(key)
-    context_info = records["text_content"].str.cat(sep=".").replace("\n", "").strip()
+                param.add(key)
+    context_info = ""
+    for i, r in records.iterrows():
+        if r["tag_name"].upper() != "SUBMIT" and len(r["text_content"]) != 0:
+            context_info += str(r["text_content"]) + " "
+    context_info = context_info.replace("\n", "").strip()
     if len(context_info) == 0:
         context_info = ""
     for url in main_urls:
         context_info += url + " "
-    for param in params:
-        context_info += param + " "
-
+    for p in param:
+        context_info += p + " "
 
     tokens = word_tokenize(context_info)
     tokens = [t for t in tokens if t not in stop_words]
