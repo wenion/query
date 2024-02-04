@@ -53,6 +53,7 @@ def query(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
+    print(request)
     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 20000}
     # get current time
     current_time = datetime.now()
@@ -187,7 +188,7 @@ def task_classification(request):
         "task_name": pred,
         "certainty": max(prob),
         "message": f"You are currently detected to be working on task <strong>{pred}</strong>",
-        "interval": 15000
+        "interval": 20000
     }
 
 
