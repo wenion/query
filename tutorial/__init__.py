@@ -18,6 +18,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+push_status = {}
+
 @view_config(route_name='hello', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
 def hello_world(request):
     return {'Hello':'world'}
@@ -57,6 +59,8 @@ def task_classification(request):
     user_id = request.params.get("userid")
     result = fetch_all_user_event(user_id, "timestamp")
     trace = pd.DataFrame(result["table_result"])
+    if user_id not in push_status:
+        push_status[user_id] = {"Adding Moodle Forum": 0, "Adding Moodle Resource": 0, "Updating Moodle Information": 0}
 
     interval = 20000
     if "interval" in request.params:
@@ -163,6 +167,10 @@ def task_classification(request):
         "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
 
     }
+    if push_status[user_id][pred] >= 2:
+        return invalid_result
+    else:
+        push_status[user_id][pred] += 1
     return {
         "task_name": pred,
         "certainty": max(prob),
