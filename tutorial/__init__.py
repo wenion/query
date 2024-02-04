@@ -118,12 +118,12 @@ def task_classification(request):
             for key in query_params.keys():
                 param.add(key)
     context_info = ""
-    for i, r in records.iterrows():
-        if r["tag_name"].upper() != "SUBMIT" and len(r["text_content"]) != 0:
-            context_info += str(r["text_content"]) + " "
-    context_info = context_info.replace("\n", "").strip()
-    if len(context_info) == 0:
-        context_info = ""
+    # for i, r in records.iterrows():
+    #     if r["tag_name"].upper() != "SUBMIT" and len(r["text_content"]) != 0:
+    #         context_info += str(r["text_content"]) + " "
+    # context_info = context_info.replace("\n", "").strip()
+    # if len(context_info) == 0:
+    #     context_info = ""
     for url in main_urls:
         context_info += url + " "
     for p in param:
@@ -147,7 +147,12 @@ def task_classification(request):
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
     print(user_id, pred, max(prob))
-    if max(prob) <= 0.80:
+    prob_task = {
+        "Adding Moodle Forum": 0.5,
+        "Adding Moodle Resource": 0.5,
+        "Updating Moodle Information": 0.85
+    }
+    if max(prob) <= prob_task[pred]:
         return invalid_result
     expert_trace_dict = {
         "Adding Moodle Forum": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>Open Forum</strong> in the Activities</li><li>Fill in the forum details and select the desired forum type (e.g., Q and A Forum)</li><li>Scroll down to save your edits</li></ol>",
