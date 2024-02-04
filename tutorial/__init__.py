@@ -22,11 +22,11 @@ push_status = {}
 
 @view_config(route_name='hello', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
 def hello_world(request):
-    return {'Hello':'world'}
+    return {'Hello': 'world'}
 
 @view_config(route_name='query', request_method='GET', renderer='json')
 def query(request):
-    return {'Hello':'query'}
+    return {'Hello': 'query'}
 
 # @view_config(route_name='search', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
 # def search(request):
@@ -62,7 +62,7 @@ def task_classification(request):
     result = fetch_all_user_event(user_id, "timestamp")
     trace = pd.DataFrame(result["table_result"])
     if user_id not in push_status:
-        push_status[user_id] = {"Adding Moodle Forum": 0, "Adding Moodle Resource": 0, "Updating Moodle Information": 0}
+        push_status[user_id] = {"Adding Moodle Forum": None, "Adding Moodle Resource": None, "Updating Moodle Information": None}
     basic_info = current_time.strftime('%Y-%m-%d %H:%M:%S') + " " + user_id
     interval = 20000
     if "interval" in request.params:
@@ -172,11 +172,17 @@ def task_classification(request):
         "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
 
     }
-    if push_status[user_id][pred] >= 2:
-        return invalid_result
+    if not push_status[user_id][pred]:
+        push_status[user_id][pred] = datetime.now()
     else:
-        push_status[user_id][pred] += 1
-        print("Push message successfully!")
+        time_diff = datetime.now() - push_status[user_id][pred]
+        time_delta = timedelta(minutes=8)
+        if time_diff < time_delta:
+            print(basic_info, ":", "Task Identified within 8 Minutes")
+            return invalid_result
+        else:
+            push_status[user_id][pred] = datetime.now()
+    print("Push message successfully!")
     return {
         "task_name": pred,
         "certainty": max(prob),
