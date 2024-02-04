@@ -162,7 +162,7 @@ def task_classification(request):
     prob_task = {
         "Adding Moodle Forum": 0.5,
         "Adding Moodle Resource": 0.5,
-        "Updating Moodle Information": 0.85
+        "Updating Moodle Information": 0.90
     }
     if max(prob) <= prob_task[pred]:
         return invalid_result
