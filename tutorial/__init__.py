@@ -53,7 +53,7 @@ def query(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 15000}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 20000}
     # get current time
     current_time = datetime.now()
     if "userid" not in request.params:
@@ -63,19 +63,19 @@ def task_classification(request):
     trace = pd.DataFrame(result["table_result"])
     if user_id not in push_status:
         push_status[user_id] = {"Adding Moodle Forum": 0, "Adding Moodle Resource": 0, "Updating Moodle Information": 0}
-
+    basic_info = current_time.strftime('%Y-%m-%d %H:%M:%S') + " " + user_id
     interval = 20000
     if "interval" in request.params:
         interval = request.params.get("interval")
 
     if interval == 0:
-        print(current_time.strftime('%Y-%m-%d %H:%M:%S') + ": Invalid interval")
+        print(basic_info + ": Invalid interval")
         return invalid_result
 
     time_delta_in_second = 20
 
     if trace is None or len(trace) == 0:
-        print(current_time.strftime('%Y-%m-%d %H:%M:%S') + ": No trace found")
+        print(basic_info + ": No trace found")
         return invalid_result
 
     target_events = ['beforeunload', 'click', 'keydown', 'open', 'scroll', 'select', 'server-record', 'submit']
@@ -90,7 +90,7 @@ def task_classification(request):
     ago = current_time - timedelta(seconds=time_delta_in_second)
     records = trace[(trace["timestamp"] >= ago) & (trace["timestamp"] <= current_time)]
     if records is None or len(records) == 0:
-        print(current_time.strftime('%Y-%m-%d %H:%M:%S') + ": No records found")
+        print(basic_info + ": No records found")
         return invalid_result
     # records = trace.iloc[24:71] # for testing
     # get the attributes
@@ -106,7 +106,7 @@ def task_classification(request):
         dt += [avg_time_between_operations.mean(), avg_time_between_operations.std()]
     dt += [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
-        print(current_time.strftime('%Y-%m-%d %H:%M:%S') + ": Invalid feature values")
+        print(basic_info + ": Invalid feature values")
         return invalid_result
     data = [dt]
     # contextual features
@@ -155,7 +155,7 @@ def task_classification(request):
 
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
-    print(current_time.strftime('%Y-%m-%d %H:%M:%S'), ":", user_id, pred, max(prob))
+    print(basic_info, ":", pred, max(prob))
     prob_task = {
         "Adding Moodle Forum": 0.5,
         "Adding Moodle Resource": 0.5,
