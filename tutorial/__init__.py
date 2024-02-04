@@ -102,6 +102,8 @@ def task_classification(request):
     dt = [no_events, no_unique_events, no_unique_tags]
     if len(avg_time_between_operations) == 0:
         dt += [0, 0]
+    elif len(avg_time_between_operations) == 1:
+        dt += [avg_time_between_operations.mean(), 0]
     else:
         dt += [avg_time_between_operations.mean(), avg_time_between_operations.std()]
     dt += [counts[val] if val in counts else 0 for val in target_events]
@@ -174,6 +176,7 @@ def task_classification(request):
         return invalid_result
     else:
         push_status[user_id][pred] += 1
+        print("Push message successfully!")
     return {
         "task_name": pred,
         "certainty": max(prob),
