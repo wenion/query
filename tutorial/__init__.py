@@ -54,6 +54,8 @@ def query(request):
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 15000}
+    # get current time
+    current_time = datetime.now()
     if "userid" not in request.params:
         return invalid_result
     user_id = request.params.get("userid")
@@ -67,13 +69,13 @@ def task_classification(request):
         interval = request.params.get("interval")
 
     if interval == 0:
-        print("Invalid interval")
+        print(current_time.strftime() + ": Invalid interval")
         return invalid_result
 
     time_delta_in_second = 20
 
     if trace is None or len(trace) == 0:
-        print("No trace found")
+        print(current_time.strftime() + ": No trace found")
         return invalid_result
 
     target_events = ['beforeunload', 'click', 'keydown', 'open', 'scroll', 'select', 'server-record', 'submit']
@@ -88,7 +90,7 @@ def task_classification(request):
     ago = current_time - timedelta(seconds=time_delta_in_second)
     records = trace[(trace["timestamp"] >= ago) & (trace["timestamp"] <= current_time)]
     if records is None or len(records) == 0:
-        print("No records found")
+        print(current_time.strftime() + ": No records found")
         return invalid_result
     # records = trace.iloc[24:71] # for testing
     # get the attributes
@@ -104,7 +106,7 @@ def task_classification(request):
         dt += [avg_time_between_operations.mean(), avg_time_between_operations.std()]
     dt += [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
-        print("Invalid feature values")
+        print(current_time.strftime() + ": Invalid feature values")
         return invalid_result
     data = [dt]
     # contextual features
@@ -153,7 +155,7 @@ def task_classification(request):
 
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
-    print(user_id, pred, max(prob))
+    print(current_time.strftime(), ":", user_id, pred, max(prob))
     prob_task = {
         "Adding Moodle Forum": 0.5,
         "Adding Moodle Resource": 0.5,
