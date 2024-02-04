@@ -109,8 +109,11 @@ def task_classification(request):
     param = set()
     for url in urls:
         if "?" in url:
-            main, qs = url.split("?")
-            main_urls.add(main.split("/")[-1])
+            parts = url.split("?")
+            if len(parts) != 2:
+                continue
+            first_part, second_part = parts
+            main_urls.add(first_part.split("/")[-1])
             # Parse the URL string
             parsed_url = urllib.parse.urlparse(url)
             # Get the query parameters as a dictionary
