@@ -53,7 +53,8 @@ def query(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    print(request)
+    if request.url:
+        print(request.url)
     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 20000}
     # get current time
     current_time = datetime.now()
