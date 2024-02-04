@@ -107,6 +107,7 @@ def task_classification(request):
     dt += [counts[val] if val in counts else 0 for val in target_events]
     if np.isnan(dt).any():
         print(basic_info + ": Invalid feature values")
+        print(dt)
         return invalid_result
     data = [dt]
     # contextual features
