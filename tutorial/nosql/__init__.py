@@ -5,7 +5,7 @@ import pytz
 
 from redis_om import Migrator
 from redis_om import Field, JsonModel, EmbeddedJsonModel
-from pydantic import NonNegativeInt
+#from pydantic import NonNegativeInt
 from typing import Optional
 
 #from h.models_redis.rating import Rating
@@ -16,7 +16,7 @@ __all__ = (
     "Bookmark",
     "UserEvent",
     #"Rating",
-    #"UserFile",
+    "UserFile",
 )
 
 
@@ -357,21 +357,21 @@ def delete_security_list(methodology, domain):
         SecurityList.delete(exist[0].pk)
 
 
-# class UserFile(JsonModel):  # repository file's attribute
-#     class Meta:
-#         global_key_prefix = 'h'
-#         model_key_prefix = 'UserFile'
-#     userid: str = Field(index=True)
-#     name: str = Field(index=True)
-#     path: str = Field(index=True)
-#     directory_path: str = Field(index=True)
-#     filetype: str = Field(index=True)
-#     link: str = Field(index=True)
-#     depth: NonNegativeInt = Field(index=True)
-#     accessibility: str = Field(index=True)
-#     ingested: int = Field(index=True, default=0)
-#     source: str = Field(index=True)
-#     deleted: int = Field(index=True, default=0)
+class UserFile(JsonModel):  # repository file's attribute
+    class Meta:
+        global_key_prefix = 'h'
+        model_key_prefix = 'UserFile'
+    userid: str = Field(index=True)
+    name: str = Field(index=True)
+    path: str = Field(index=True)
+    directory_path: str = Field(index=True)
+    filetype: str = Field(index=True)
+    link: str = Field(index=True)
+    depth: int = Field(index=True)
+    accessibility: str = Field(index=True)
+    ingested: int = Field(index=True, default=0)
+    source: str = Field(index=True)
+    deleted: int = Field(index=True, default=0)
 
 
 def add_user_role(userid, faculty, role, unit, campus, year, experience, expert):
