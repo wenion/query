@@ -511,9 +511,9 @@ def save_in_redis(event):
         return {"error": str(event)}
 
 
-# def includeme(config):
-#     # config.add_request_method(get_user_role, name="user_role", property=True)
-#     Migrator().run()
-#     # attach_sql(config)
-#     openai.api_key = config.registry.settings.get("openai_key")
-#     print("openai", openai.api_key)
+def includeme(config):
+    # config.add_request_method(get_user_role, name="user_role", property=True)
+    Migrator().run()
+    # attach_sql(config)
+    # openai.api_key = config.registry.settings.get("openai_key")
+    # print("openai", openai.api_key)
