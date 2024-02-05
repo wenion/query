@@ -16,7 +16,7 @@ __all__ = (
     "Bookmark",
     "UserEvent",
     #"Rating",
-    "UserFile",
+    #"UserFile",
 )
 
 
@@ -29,9 +29,9 @@ class UserRole(EmbeddedJsonModel):
     teaching_role: str = Field(index=True)
     teaching_unit: str = Field(index=True)
     campus: Optional[str] = Field(full_text_search=True, sortable=True)
-    joined_year: NonNegativeInt = Field(index=True)
-    years_of_experience: NonNegativeInt = Field(index=True)
-    expert: NonNegativeInt = Field(index=True)
+    joined_year: int = Field(index=True)
+    years_of_experience: int = Field(index=True)
+    expert: int = Field(index=True)
 
 
 class Result(JsonModel):
@@ -357,21 +357,21 @@ def delete_security_list(methodology, domain):
         SecurityList.delete(exist[0].pk)
 
 
-class UserFile(JsonModel):  # repository file's attribute
-    class Meta:
-        global_key_prefix = 'h'
-        model_key_prefix = 'UserFile'
-    userid: str = Field(index=True)
-    name: str = Field(index=True)
-    path: str = Field(index=True)
-    directory_path: str = Field(index=True)
-    filetype: str = Field(index=True)
-    link: str = Field(index=True)
-    depth: NonNegativeInt = Field(index=True)
-    accessibility: str = Field(index=True)
-    ingested: int = Field(index=True, default=0)
-    source: str = Field(index=True)
-    deleted: int = Field(index=True, default=0)
+# class UserFile(JsonModel):  # repository file's attribute
+#     class Meta:
+#         global_key_prefix = 'h'
+#         model_key_prefix = 'UserFile'
+#     userid: str = Field(index=True)
+#     name: str = Field(index=True)
+#     path: str = Field(index=True)
+#     directory_path: str = Field(index=True)
+#     filetype: str = Field(index=True)
+#     link: str = Field(index=True)
+#     depth: NonNegativeInt = Field(index=True)
+#     accessibility: str = Field(index=True)
+#     ingested: int = Field(index=True, default=0)
+#     source: str = Field(index=True)
+#     deleted: int = Field(index=True, default=0)
 
 
 def add_user_role(userid, faculty, role, unit, campus, year, experience, expert):
