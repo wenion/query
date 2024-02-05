@@ -207,7 +207,7 @@ def expert_replay(trace):
     flag_input = True
     for event in trace:
         cur_event = str(event["event_type"])
-        if cur_event not in ["beforeunload", "OPEN", "visibilitychange"]:
+        if cur_event not in ["OPEN", "visibilitychange"]:
             if cur_event == "scroll":
                 if flag_scroll:
                     flag_scroll = False
@@ -220,12 +220,17 @@ def expert_replay(trace):
                     event_description = get_text_by_event(cur_event, str(event["text_content"]))
                     trace_message_list.append(event_description)
                 flag_scroll = True
-            elif cur_event == "click":
+            elif cur_event == "click" or cur_event == "select":
                 flag_scroll = True
                 flag_input = True
                 event_description = get_text_by_event(cur_event, str(event["tag_name"]))
                 event_position = get_position_viewport(event["width"], event["height"], event["offset_x"], event["offset_y"])
                 trace_message_list.append(f"{event_description} at {event_position}")
+            elif cur_event == "beforeunload":
+                flag_scroll = True
+                flag_input = True
+                event_description = get_text_by_event(cur_event, str(event["text_content"]))
+                trace_message_list.append(event_description)
     trace_message = "<ul><li>" + "</li><li>".join(trace_message_list) + "</li></ul>"
     return trace_message
 
@@ -240,17 +245,21 @@ def get_text_by_event(event_type, text_content):
     if event_type == "click":
         if len(text_content.strip()) == 0:
             return "Click"
-        return "Click on " + text_content.replace("  ", " ").replace("\n", " ")
+        return "Click on the " + text_content.replace("  ", " ").replace("\n", " ")
     elif event_type == "scroll":
         return text_content.capitalize() + " in the web page"
     elif event_type == "select":
         return "Select information"
     elif event_type == "keydown":
         return "Input/Modify information"
+    elif event_type == "beforeunload":
+        return "Entering a different page/mode"
     else:
         return "No description"
 
 def get_position_viewport(port_x, port_y, offset_x, offset_y):
+    if port_y / 3 <= offset_y <= port_y * 2 / 3 and port_x / 3 <= offset_x <= port_x * 2 / 3:
+        return "center"
     height = ""
     width = ""
     if port_y/2 > offset_y:
