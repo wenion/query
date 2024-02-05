@@ -211,7 +211,7 @@ def fetch_all_events_by_task_name(task_name):
 def is_session_by_expert(session_id):
     result = UserEvent.find(UserEvent.session_id == session_id).first()
     if result:
-        userid = result["userid"]
+        userid = result.userid
         if get_user_expertise(userid) == 1:
             return True
     return False
@@ -415,7 +415,7 @@ def update_user_role(userid, faculty, role, unit, campus, year, experience, expe
         return False
 
 def get_user_expertise(userid):
-    return UserRole.find(UserRole.userid == userid).first()["expert"]
+    return UserRole.find(UserRole.userid == userid).first().expert
 
 
 def get_user_role_by_userid(userid):
