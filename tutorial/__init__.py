@@ -174,7 +174,7 @@ def task_classification(request):
     # }
     trace_message = ""
     expert_trace = fetch_all_events_by_task_name(pred)
-    print(expert_trace)
+    expert_trace = expert_trace["table_result"]
     if len(expert_trace) == 0:
         print(basic_info, ":", "Task identified but no expert trace available")
         return invalid_result
