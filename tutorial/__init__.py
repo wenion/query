@@ -3,7 +3,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
-from tutorial.nosql import fetch_user_event, fetch_all_user_event
+from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_session_task_name
 
 import nltk
 from nltk.corpus import stopwords
@@ -166,12 +166,20 @@ def task_classification(request):
     }
     if max(prob) <= prob_task[pred]:
         return invalid_result
-    expert_trace_dict = {
-        "Adding Moodle Forum": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>Open Forum</strong> in the Activities</li><li>Fill in the forum details and select the desired forum type (e.g., Q and A Forum)</li><li>Scroll down to save your edits</li></ol>",
-        "Adding Moodle Resource": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>File</strong> (for media resource) or <strong>Label</strong> (for textual resource) in the Resources</li><li>Fill in the resource details</li><li>Scroll down to save your edits</li></ol>",
-        "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
+    # expert_trace_dict = {
+    #     "Adding Moodle Forum": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>Open Forum</strong> in the Activities</li><li>Fill in the forum details and select the desired forum type (e.g., Q and A Forum)</li><li>Scroll down to save your edits</li></ol>",
+    #     "Adding Moodle Resource": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>File</strong> (for media resource) or <strong>Label</strong> (for textual resource) in the Resources</li><li>Fill in the resource details</li><li>Scroll down to save your edits</li></ol>",
+    #     "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
+    #
+    # }
+    trace_message = ""
+    expert_trace = fetch_all_events_by_session_task_name(pred)
+    if len(expert_trace) == 0:
+        return invalid_result
+    else:
+        trace_info = expert_trace[list(expert_trace.keys())[0]]
+        trace_message = expert_replay(trace_info)
 
-    }
     if not push_status[user_id][pred]:
         push_status[user_id][pred] = datetime.now()
     else:
@@ -186,10 +194,72 @@ def task_classification(request):
     return {
         "task_name": pred,
         "certainty": max(prob),
-        "message": f"You are currently detected to be working on task <strong>{pred}</strong>",
+        "message": f"You are currently detected to be working on task <strong>{pred}</strong>{trace_message}",
         "interval": 20000
     }
 
+### Methods from Ivan
+def expert_replay(trace):
+    trace_message_list = []
+    flag_scroll = True
+    flag_input = True
+    for event in trace:
+        cur_event = str(event["event_type"])
+        if cur_event not in ["beforeunload", "OPEN", "visibilitychange"]:
+            if cur_event == "scroll":
+                if flag_scroll:
+                    flag_scroll = False
+                    event_description = get_text_by_event(cur_event, str(event["text_content"]).replace(":N/A", ""))
+                    trace_message_list.append(event_description)
+                flag_input = True
+            elif cur_event == "keydown":
+                if flag_input:
+                    flag_input = False
+                    event_description = get_text_by_event(cur_event, str(event["text_content"]))
+                    trace_message_list.append(event_description)
+                flag_scroll = True
+            elif cur_event == "click":
+                flag_scroll = True
+                flag_input = True
+                event_description = get_text_by_event(cur_event, str(event["tag_name"]))
+                event_position = get_position_viewport(event["width"], event["height"], event["offset_x"], event["offset_y"])
+                trace_message_list.append(f"{event_description} at {event_position}")
+    trace_message = "<ul><li>" + "</li><li>".join(trace_message_list) + "</li></ul>"
+    return trace_message
+
+def get_keyboard(text_keydown, content):
+    if content == "Backspace":
+        return text_keydown[:-1]
+    elif content == "Shift" or content == "Enter":
+        return text_keydown
+    return text_keydown + content
+
+def get_text_by_event(event_type, text_content):
+    if event_type == "click":
+        if len(text_content.strip()) == 0:
+            return "Click"
+        return "Click on " + text_content.replace("  ", " ").replace("\n", " ")
+    elif event_type == "scroll":
+        return text_content.capitalize() + " in the web page"
+    elif event_type == "select":
+        return "Select information"
+    elif event_type == "keydown":
+        return "Input/Modify information"
+    else:
+        return "No description"
+
+def get_position_viewport(port_x, port_y, offset_x, offset_y):
+    height = ""
+    width = ""
+    if port_y/2 > offset_y:
+        height = "top"
+    else:
+        height = "bottom"
+    if port_x/2 > offset_x:
+        width = "left"
+    else:
+        width = "right"
+    return f"{height} {width}"
 
 def main(global_config, **settings):
     config = Configurator(settings=settings)
