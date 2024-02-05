@@ -162,7 +162,7 @@ def task_classification(request):
     prob_task = {
         "Adding Moodle Forum": 0.5,
         "Adding Moodle Resource": 0.5,
-        "Updating Moodle Information": 0.90
+        "Updating Moodle Information": 0.93
     }
     if max(prob) <= prob_task[pred]:
         return invalid_result
@@ -174,6 +174,7 @@ def task_classification(request):
     # }
     trace_message = ""
     expert_trace = fetch_all_events_by_task_name(pred)
+    print(expert_trace)
     if len(expert_trace) == 0:
         print(basic_info, ":", "Task identified but no expert trace available")
         return invalid_result
