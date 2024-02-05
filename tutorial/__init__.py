@@ -3,7 +3,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
-from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_session_task_name
+from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name
 
 import nltk
 from nltk.corpus import stopwords
@@ -173,7 +173,7 @@ def task_classification(request):
     #
     # }
     trace_message = ""
-    expert_trace = fetch_all_events_by_session_task_name(pred)
+    expert_trace = fetch_all_events_by_task_name(pred)
     if len(expert_trace) == 0:
         return invalid_result
     else:
