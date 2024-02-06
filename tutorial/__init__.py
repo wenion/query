@@ -51,20 +51,20 @@ def query(request):
 #         'content': content,
 #     }
 
-@view_config(route_name="get_all_message", request_method="GET", renderer="json")
-def get_all_message(request):
-    task_names = ["Adding Moodle Forum", "Adding Moodle Resource", "Updating Moodle Information"]
-    results = {}
-    for task_name in task_names:
-        expert_trace = fetch_all_events_by_task_name(task_name)
-        expert_trace = expert_trace["table_result"]
-        if len(expert_trace) == 0:
-            return None
-        else:
-            trace_info = expert_trace[list(expert_trace.keys())[0]]
-            trace_message = expert_replay(trace_info)
-            results[task_name] = trace_message
-    return results
+# @view_config(route_name="get_all_message", request_method="GET", renderer="json")
+# def get_all_message(request):
+#     task_names = ["Adding Moodle Forum", "Embedding Moodle Media Resource", "Updating Moodle Information"]
+#     results = {}
+#     for task_name in task_names:
+#         expert_trace = fetch_all_events_by_task_name(task_name)
+#         expert_trace = expert_trace["table_result"]
+#         if len(expert_trace) == 0:
+#             return None
+#         else:
+#             trace_info = expert_trace[list(expert_trace.keys())[0]]
+#             trace_message = expert_replay(trace_info)
+#             results[task_name] = trace_message
+#     return results
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
@@ -77,7 +77,7 @@ def task_classification(request):
     result = fetch_all_user_event(user_id, "timestamp")
     trace = pd.DataFrame(result["table_result"])
     if user_id not in push_status:
-        push_status[user_id] = {"Adding Moodle Forum": None, "Adding Moodle Resource": None, "Updating Moodle Information": None}
+        push_status[user_id] = {"Adding Moodle Forum": None, "Embedding Moodle Media Resource": None, "Updating Moodle Information": None}
     basic_info = current_time.strftime('%Y-%m-%d %H:%M:%S') + " " + user_id
     interval = 20000
     if "interval" in request.params:
@@ -311,6 +311,6 @@ def main(global_config, **settings):
     config.add_route('search', 'search')
     config.add_route('hello', '/')
     config.add_route("task_classification", "task_classification")
-    config.add_route("get_all_message", "get_all_message")
+    #config.add_route("get_all_message", "get_all_message")
     config.scan()
     return config.make_wsgi_app()
