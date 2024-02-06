@@ -306,5 +306,6 @@ def main(global_config, **settings):
     config.add_route('search', 'search')
     config.add_route('hello', '/')
     config.add_route("task_classification", "task_classification")
+    config.add_route("get_all_message", "get_all_message")
     config.scan()
     return config.make_wsgi_app()
