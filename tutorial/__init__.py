@@ -176,26 +176,31 @@ def task_classification(request):
     print(basic_info, ":", pred, max(prob))
     prob_task = {
         "Adding Moodle Forum": 0.5,
-        "Adding Moodle Resource": 0.5,
+        "Embedding Moodle Media Resource": 0.5,
         "Updating Moodle Information": 0.93
     }
     if max(prob) <= prob_task[pred]:
         return invalid_result
+    expert_trace_dict = {
+        "Updating Moodle Information": "<ol><li>Click on the button 'Turn editing on'<img src='https://drive.google.com/file/d/1jPQCnRKBTQw48Ng_IB-y8eVo25n0exb9/view?usp=drive_link' style='width=80%'></li><li>Go to the moodle section, click 'Edit settings'<img src='https://drive.google.com/file/d/1IbLHvWs2YNQqvNs0dkY61kz5Ehmcr9Zq/view?usp=drive_link' style='width=80%'></li><li>Make changes, save the changes and 'Turn edit off'</li></ol>",
+        "Embedding Moodle Media Resource": "<ol><li>Go to the moodle section, click 'Edit settings'<img src='https://drive.google.com/file/d/1fkJtbAboUa1hv52doLmtC84Fg9dgesC7/view?usp=drive_link' style='width=80%'></li><li>In the text edit panel, click 'Insert moodle media'<img src='https://drive.google.com/file/d/11XamKYjJNGqaIr13fA8ZITCBgAjxf_bO/view?usp=drive_link' style='width=80%'></li><li>Insert video link</li><li>Save resources and 'Turn edit off'</li></ol>",
+        "Adding Moodle Forum": "<ol><li>Click on the button 'Add an activity or resource'<img src='https://drive.google.com/file/d/1223SAXzASkzZgOGhlZFTPctXr9wwahLs/view?usp=drive_link' style='width=80%'></li><li>Select 'Forum'<img src='https://drive.google.com/file/d/1E5BDdXABaUQ-FKABpRowPcm1vsNvQ7YW/view?usp=drive_link' style='width=80%'></li><li>Select 'Forum type'<img src='https://drive.google.com/file/d/14zkoM6INqHhGkWAr3IxunbkJ3rRs7RIU/view?usp=drive_link' style='width=80%'></li><li>Save the forum and 'Turn edit off'</li></ol>"
+    }
     # expert_trace_dict = {
     #     "Adding Moodle Forum": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>Open Forum</strong> in the Activities</li><li>Fill in the forum details and select the desired forum type (e.g., Q and A Forum)</li><li>Scroll down to save your edits</li></ol>",
     #     "Adding Moodle Resource": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>File</strong> (for media resource) or <strong>Label</strong> (for textual resource) in the Resources</li><li>Fill in the resource details</li><li>Scroll down to save your edits</li></ol>",
     #     "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
     #
     # }
-    trace_message = ""
-    expert_trace = fetch_all_events_by_task_name(pred)
-    expert_trace = expert_trace["table_result"]
-    if len(expert_trace) == 0:
-        print(basic_info, ":", "Task identified but no expert trace available")
-        return invalid_result
-    else:
-        trace_info = expert_trace[list(expert_trace.keys())[0]]
-        trace_message = expert_replay(trace_info)
+    trace_message = expert_trace_dict[pred]
+    # expert_trace = fetch_all_events_by_task_name(pred)
+    # expert_trace = expert_trace["table_result"]
+    # if len(expert_trace) == 0:
+    #     print(basic_info, ":", "Task identified but no expert trace available")
+    #     return invalid_result
+    # else:
+    #     trace_info = expert_trace[list(expert_trace.keys())[0]]
+    #     trace_message = expert_replay(trace_info)
 
     if not push_status[user_id][pred]:
         push_status[user_id][pred] = datetime.now()
