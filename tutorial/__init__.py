@@ -51,6 +51,21 @@ def query(request):
 #         'content': content,
 #     }
 
+@view_config(route_name="get_all_message", request_method="GET", renderer="json")
+def get_all_message(request):
+    task_names = ["Adding Moodle Forum", "Adding Moodle Resource", "Updating Moodle Information"]
+    results = {}
+    for task_name in task_names:
+        expert_trace = fetch_all_events_by_task_name(task_name)
+        expert_trace = expert_trace["table_result"]
+        if len(expert_trace) == 0:
+            return None
+        else:
+            trace_info = expert_trace[list(expert_trace.keys())[0]]
+            trace_message = expert_replay(trace_info)
+            results[task_name] = trace_message
+    return results
+
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 20000}
