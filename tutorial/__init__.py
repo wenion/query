@@ -118,6 +118,7 @@ def task_classification(request):
             idle_result["interval"] = interval * 2
         else:
             idle_result["interval"] = 60000
+        print(interval)
         print(basic_info + ": No records found; " + "Setting interval to " + str(idle_result["interval"]))
         return idle_result
     # records = trace.iloc[24:71] # for testing
