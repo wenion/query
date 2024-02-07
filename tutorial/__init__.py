@@ -177,7 +177,7 @@ def task_classification(request):
     print(basic_info, ":", pred, max(prob))
     prob_task = {
         "Adding Moodle Forum": 0.75,
-        "Embedding Moodle Media Resource": 0.5,
+        "Embedding Moodle Media Resource": 0.4,
         "Updating Moodle Information": 0.75
     }
     if max(prob) <= prob_task[pred]:
@@ -193,7 +193,6 @@ def task_classification(request):
     #     "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
     #
     # }
-    pred = "Embedding Moodle Media Resource"
     trace_message = expert_trace_dict[pred]
     # expert_trace = fetch_all_events_by_task_name(pred)
     # expert_trace = expert_trace["table_result"]
