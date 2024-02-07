@@ -113,7 +113,9 @@ def task_classification(request):
     records = trace[(trace["timestamp"] >= ago) & (trace["timestamp"] <= current_time)]
     if records is None or len(records) == 0:
         print(basic_info + ": No records found")
-        return invalid_result
+        idle_result = invalid_result.copy()
+        idle_result["interval"] = 60000
+        return idle_result
     # records = trace.iloc[24:71] # for testing
     # get the attributes
     no_events = len(records)
