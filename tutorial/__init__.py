@@ -89,6 +89,7 @@ def task_classification(request):
     interval = 20000
     if "interval" in request.params:
         interval = request.params.get("interval")
+        interval = int(interval)
 
     if interval == 0:
         print(basic_info + ": Invalid interval")
