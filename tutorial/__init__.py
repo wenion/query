@@ -116,7 +116,7 @@ def task_classification(request):
         print(basic_info + ": No records found")
         idle_result = invalid_result.copy()
         if interval > 20000:
-            idle_result["interval"] *= 2
+            idle_result["interval"] = interval * 2
         else:
             idle_result["interval"] = 60000
         return idle_result
