@@ -18,6 +18,13 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+# load task model
+with open("model/task_model_with_context.pkl", "rb") as f:
+    task_model = pickle.load(f)
+# load vectorizer
+with open("model/context_vectorizer.pkl", "rb") as f:
+    vectorizer = pickle.load(f)
+
 push_status = {}
 
 @view_config(route_name='hello', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
@@ -160,16 +167,9 @@ def task_classification(request):
     tokens = [t for t in tokens if t not in stop_words]
     updated_context_info = " ".join(tokens)
 
-    # load vectorizer
-    with open("model/context_vectorizer.pkl", "rb") as f:
-        vectorizer = pickle.load(f)
     transformed_context_data = vectorizer.transform([updated_context_info])
 
     combined_data = [data[0] + list(transformed_context_data[0].toarray()[0])]
-
-    # load task model
-    with open("model/task_model_with_context.pkl", "rb") as f:
-        task_model = pickle.load(f)
 
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
