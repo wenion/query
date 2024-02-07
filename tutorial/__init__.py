@@ -178,7 +178,7 @@ def task_classification(request):
     prob_task = {
         "Adding Moodle Forum": 0.5,
         "Embedding Moodle Media Resource": 0.5,
-        "Updating Moodle Information": 0.93
+        "Updating Moodle Information": 0.75
     }
     if max(prob) <= prob_task[pred]:
         return invalid_result
@@ -218,7 +218,7 @@ def task_classification(request):
         "task_name": pred,
         "certainty": max(prob),
         "message": f"You are currently detected to be working on task <strong>{pred}</strong>{trace_message}",
-        "interval": 20000
+        "interval": 60000
     }
 
 ### Methods from Ivan
