@@ -114,7 +114,10 @@ def task_classification(request):
     if records is None or len(records) == 0:
         print(basic_info + ": No records found")
         idle_result = invalid_result.copy()
-        idle_result["interval"] = 60000
+        if interval > 20000:
+            idle_result["interval"] *= 2
+        else:
+            idle_result["interval"] = 60000
         return idle_result
     # records = trace.iloc[24:71] # for testing
     # get the attributes
