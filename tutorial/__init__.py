@@ -174,6 +174,7 @@ def task_classification(request):
 
     pred = task_model.predict(combined_data)[0]
     prob = task_model.predict_proba(combined_data)[0]
+    pred = "Embedding Moodle Media Resource" # TODO: remove
     print(basic_info, ":", pred, max(prob))
     prob_task = {
         "Adding Moodle Forum": 0.75,
