@@ -228,17 +228,17 @@ def task_classification(request):
     if "section" in params:
         section_ids = params["section"]
         if pred == "Embedding Moodle Media Resource":
-            if section_ids.count("4") / len(urls) > 0.8:
+            if section_ids.count("4") >= 2:
                 pred = "Embedding Moodle Resource in Assessment"
             else:
                 vals, counts = np.unique(section_ids, return_counts=True)
                 for a, b in zip(vals, counts):
-                    if a > "4" and b / len(urls) > 0.8:
+                    if a > "4" and b >= 2:
                         pred = "Embedding Moodle Media Resource in Weekly Content"
         elif pred == "Updating Moodle Information":
             if section_ids.count("0") >= 1:
                 pred = "Updating Unit Information"
-            elif section_ids.count("2") / len(urls) > 0.8:
+            elif section_ids.count("2") >= 2:
                 pred = "Updating Consultation Information"
     else:
         print(basic_info, ":", "Cannot find section information")
