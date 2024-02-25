@@ -253,7 +253,7 @@ def task_classification(request):
             return invalid_result
         else:
             push_status[user_id][pred] = datetime.now()
-    print("Push message successfully!")
+    print("Push message successfully!", pred)
     return {
         "task_name": pred,
         "certainty": max(prob),
