@@ -240,6 +240,8 @@ def task_classification(request):
                 pred = "Updating Unit Information"
             elif section_ids.count("2") / len(urls) > 0.8:
                 pred = "Updating Consultation Information"
+    else:
+        print(basic_info, ":", "Cannot find section information")
 
     if not push_status[user_id][pred]:
         push_status[user_id][pred] = datetime.now()
