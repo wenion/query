@@ -206,7 +206,7 @@ def task_classification(request):
     #     "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
     #
     # }
-    trace_message = "" #expert_trace_dict[pred] # TODO: for ShareFlow
+    trace_message = "[[ShareFlow: TODO]]" #expert_trace_dict[pred] # TODO: for ShareFlow
     # expert_trace = fetch_all_events_by_task_name(pred)
     # expert_trace = expert_trace["table_result"]
     # if len(expert_trace) == 0:
