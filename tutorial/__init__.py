@@ -84,7 +84,13 @@ def task_classification(request):
     result = fetch_all_user_event(user_id, "timestamp")
     trace = pd.DataFrame(result["table_result"])
     if user_id not in push_status:
-        push_status[user_id] = {"Adding Moodle Forum": None, "Embedding Moodle Media Resource": None, "Updating Moodle Information": None}
+        push_status[user_id] = {"Adding Moodle Forum": None,
+                                "Embedding Moodle Media Resource": None,
+                                "Updating Moodle Information": None,
+                                "Embedding Moodle Resource in Assessment": None,
+                                "Embedding Moodle Media Resource in Weekly Content": None,
+                                "Updating Unit Information": None,
+                                "Updating Consultation Information": None}
     basic_info = current_time.strftime('%Y-%m-%d %H:%M:%S') + " " + user_id
     interval = 20000
     if "interval" in request.params:
@@ -136,9 +142,10 @@ def task_classification(request):
         return invalid_result
     data = [dt]
     # contextual features
-    urls = records["base_url"].unique()
+    urls = records["base_url"].tolist()
     main_urls = set()
     param = set()
+    params = {} # hard code part
     for url in urls:
         if "?" in url:
             parts = url.split("?")
@@ -152,6 +159,11 @@ def task_classification(request):
             query_params = urllib.parse.parse_qs(parsed_url.query)
             for key in query_params.keys():
                 param.add(key)
+            for key, value in query_params.items():
+                # hard code part
+                if key not in params:
+                    params[key] = []
+                params[key].append(value)
     context_info = ""
     # for i, r in records.iterrows():
     #     if r["tag_name"].upper() != "SUBMIT" and len(r["text_content"]) != 0:
@@ -194,7 +206,7 @@ def task_classification(request):
     #     "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
     #
     # }
-    trace_message = expert_trace_dict[pred]
+    trace_message = "" #expert_trace_dict[pred] # TODO: for ShareFlow
     # expert_trace = fetch_all_events_by_task_name(pred)
     # expert_trace = expert_trace["table_result"]
     # if len(expert_trace) == 0:
@@ -203,6 +215,31 @@ def task_classification(request):
     # else:
     #     trace_info = expert_trace[list(expert_trace.keys())[0]]
     #     trace_message = expert_replay(trace_info)
+
+                            # "Adding Moodle Forum": None,
+                            #     "Embedding Moodle Media Resource": None,
+                            #     "Updating Moodle Information": None,
+                            #     "Embedding Moodle Resource in Assessment": None,
+                            #     "Embedding Moodle Media Resource in Weekly Content": None,
+                            #     "Updating Unit Information": None,
+                            #     "Updating Consultation Information": None
+
+    # hard code part
+    if "section" in params:
+        section_ids = params["section"]
+        if pred == "Embedding Moodle Media Resource":
+            if section_ids.count("4") / len(urls) > 0.8:
+                pred = "Embedding Moodle Resource in Assessment"
+            else:
+                vals, counts = np.unique(section_ids, return_counts=True)
+                for a, b in zip(vals, counts):
+                    if a > "4" and b / len(urls) > 0.8:
+                        pred = "Embedding Moodle Media Resource in Weekly Content"
+        elif pred == "Updating Moodle Information":
+            if section_ids.count("0") >= 1:
+                pred = "Updating Unit Information"
+            elif section_ids.count("2") / len(urls) > 0.8:
+                pred = "Updating Consultation Information"
 
     if not push_status[user_id][pred]:
         push_status[user_id][pred] = datetime.now()
