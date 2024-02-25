@@ -142,6 +142,7 @@ def task_classification(request):
         return invalid_result
     data = [dt]
     # contextual features
+    print(records["base_url"].unique())
     urls = records["base_url"].tolist()
     main_urls = set()
     param = set()
