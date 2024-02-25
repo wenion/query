@@ -142,7 +142,6 @@ def task_classification(request):
         return invalid_result
     data = [dt]
     # contextual features
-    print(records["base_url"].unique())
     urls = records["base_url"].tolist()
     main_urls = set()
     param = set()
@@ -229,17 +228,17 @@ def task_classification(request):
     if "section" in params:
         section_ids = params["section"]
         if pred == "Embedding Moodle Media Resource":
-            if section_ids.count("4") >= 2:
+            if section_ids.count("4") >= 1:
                 pred = "Embedding Moodle Resource in Assessment"
             else:
                 vals, counts = np.unique(section_ids, return_counts=True)
                 for a, b in zip(vals, counts):
-                    if a > "4" and b >= 2:
+                    if a > "4" and b >= 1:
                         pred = "Embedding Moodle Media Resource in Weekly Content"
         elif pred == "Updating Moodle Information":
             if section_ids.count("0") >= 1:
                 pred = "Updating Unit Information"
-            elif section_ids.count("2") >= 2:
+            elif section_ids.count("2") >= 1:
                 pred = "Updating Consultation Information"
     else:
         print(basic_info, ":", "Cannot find section information")
