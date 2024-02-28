@@ -195,34 +195,11 @@ def task_classification(request):
     }
     if max(prob) <= prob_task[pred]:
         return invalid_result
-    expert_trace_dict = {
-        "Updating Moodle Information": "<ol><li>Click on the button 'Turn editing on'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/updating%20moodle%20information%20step%201.png' style='max-width=80%'></li><li>Go to the moodle section, click 'Edit settings'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/updating%20moodle%20information%20step%202.png' style='max-width=80%'></li><li>Make changes, save the changes and 'Turn edit off'</li></ol>",
-        "Embedding Moodle Media Resource": "<ol><li>Go to the moodle section, click 'Edit settings'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/embedding%20moodle%20media%20resource%20step%201.png' style='max-width=80%'></li><li>In the text edit panel, click 'Insert moodle media'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/embedding%20moodle%20media%20resource%20step%202.jpg' style='max-width=80%'></li><li>Insert video link</li><li>Save resources and 'Turn edit off'</li></ol>",
-        "Adding Moodle Forum": "<ol><li>Click on the button 'Add an activity or resource'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%201.png' max-width='80%' height='auto'></li><li>Select 'Forum'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%202.png' style='max-width=80%'></li><li>Select 'Forum type'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%203.png' style='max-width=80%'></li><li>Save the forum and 'Turn edit off'</li></ol>"
-    }
     # expert_trace_dict = {
-    #     "Adding Moodle Forum": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>Open Forum</strong> in the Activities</li><li>Fill in the forum details and select the desired forum type (e.g., Q and A Forum)</li><li>Scroll down to save your edits</li></ol>",
-    #     "Adding Moodle Resource": "<ol><li>Click on Turn Editing On</li><li>Scroll down to +Add an activity or resource</li><li>Select <strong>File</strong> (for media resource) or <strong>Label</strong> (for textual resource) in the Resources</li><li>Fill in the resource details</li><li>Scroll down to save your edits</li></ol>",
-    #     "Updating Moodle Information": "<ol><li>Click on Turn Editing On</li><li>Scroll to the element that you want to edit</li><li>Hover on the Edit to toggle the dropdown</li><li>Select <strong>Edit Setting</strong> to make changes or <strong>Remove/Hide</strong> to delete/hide the information</li></ol>",
-    #
+    #     "Updating Moodle Information": "<ol><li>Click on the button 'Turn editing on'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/updating%20moodle%20information%20step%201.png' style='max-width=80%'></li><li>Go to the moodle section, click 'Edit settings'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/updating%20moodle%20information%20step%202.png' style='max-width=80%'></li><li>Make changes, save the changes and 'Turn edit off'</li></ol>",
+    #     "Embedding Moodle Media Resource": "<ol><li>Go to the moodle section, click 'Edit settings'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/embedding%20moodle%20media%20resource%20step%201.png' style='max-width=80%'></li><li>In the text edit panel, click 'Insert moodle media'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/embedding%20moodle%20media%20resource%20step%202.jpg' style='max-width=80%'></li><li>Insert video link</li><li>Save resources and 'Turn edit off'</li></ol>",
+    #     "Adding Moodle Forum": "<ol><li>Click on the button 'Add an activity or resource'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%201.png' max-width='80%' height='auto'></li><li>Select 'Forum'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%202.png' style='max-width=80%'></li><li>Select 'Forum type'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%203.png' style='max-width=80%'></li><li>Save the forum and 'Turn edit off'</li></ol>"
     # }
-    trace_message = "[[ShareFlow: TODO]]" #expert_trace_dict[pred] # TODO: for ShareFlow
-    # expert_trace = fetch_all_events_by_task_name(pred)
-    # expert_trace = expert_trace["table_result"]
-    # if len(expert_trace) == 0:
-    #     print(basic_info, ":", "Task identified but no expert trace available")
-    #     return invalid_result
-    # else:
-    #     trace_info = expert_trace[list(expert_trace.keys())[0]]
-    #     trace_message = expert_replay(trace_info)
-
-                            # "Adding Moodle Forum": None,
-                            #     "Embedding Moodle Media Resource": None,
-                            #     "Updating Moodle Information": None,
-                            #     "Embedding Moodle Resource in Assessment": None,
-                            #     "Embedding Moodle Media Resource in Weekly Content": None,
-                            #     "Updating Unit Information": None,
-                            #     "Updating Consultation Information": None
 
     # hard code part
     if "section" in params:
@@ -242,6 +219,25 @@ def task_classification(request):
                 pred = "Updating Consultation Information"
     else:
         print(basic_info, ":", "Cannot find section information")
+
+    trace_message = ""
+    expert_trace = fetch_all_events_by_task_name(pred)
+    expert_trace = expert_trace["table_result"]
+    if len(expert_trace) == 0:
+        print(basic_info, ":", "Task identified but no expert trace available")
+        return invalid_result
+    else:
+        trace_info = expert_trace[list(expert_trace.keys())[-1]]
+        trace_message = expert_replay(trace_info)
+
+                            # "Adding Moodle Forum": None,
+                            #     "Embedding Moodle Media Resource": None,
+                            #     "Updating Moodle Information": None,
+                            #     "Embedding Moodle Resource in Assessment": None,
+                            #     "Embedding Moodle Media Resource in Weekly Content": None,
+                            #     "Updating Unit Information": None,
+                            #     "Updating Consultation Information": None
+
 
     if not push_status[user_id][pred]:
         push_status[user_id][pred] = datetime.now()
@@ -264,34 +260,58 @@ def task_classification(request):
 ### Methods from Ivan
 def expert_replay(trace):
     trace_message_list = []
-    flag_scroll = True
-    flag_input = True
+    flag_scroll = False  # is it continuous scrolling event?
+    flag_input = False  # is it continuous inputting event?
+    text_key_down = ""
+    pre_url = None
     for event in trace:
         cur_event = str(event["event_type"])
-        if cur_event not in ["OPEN", "visibilitychange"]:
+        if not pre_url:
+            pre_url = str(event["base_url"])
+        elif pre_url != str(event["base_url"]):
+            if flag_input:
+                flag_input = False  # user finishes inputting
+                event_description = get_text_by_event("keydown", text_key_down, "")
+                trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+                text_key_down = ""
+            if flag_scroll:
+                flag_scroll = False
+            trace_message_list.append(f"Navigate to {event['base_url']}")
+            pre_url = str(event["base_url"])
+        else:
+            pre_url = str(event["base_url"])
+
+        if cur_event not in ["OPEN", "visibilitychange", "beforeunload", "open", "server-record", "submit", "START", "close"]:
             if cur_event == "scroll":
+                if flag_input:
+                    flag_input = False  # user finishes inputting
+                    event_description = get_text_by_event("keydown", text_key_down, "")
+                    trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+                    text_key_down = ""
+
+                if not flag_scroll:
+                    flag_scroll = True  # user is currently scrolling
+                    event_description = get_text_by_event(cur_event, str(event["text_content"]).split(":")[0], "")
+                    trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+
+            elif cur_event == "keydown":
+                text_key_down = get_keyboard(text_key_down, str(event["text_content"]))
+                if not flag_input:
+                    flag_input = True
                 if flag_scroll:
                     flag_scroll = False
-                    event_description = get_text_by_event(cur_event, str(event["text_content"]).replace(":N/A", ""))
-                    trace_message_list.append(event_description)
-                flag_input = True
-            elif cur_event == "keydown":
-                if flag_input:
-                    flag_input = False
-                    event_description = get_text_by_event(cur_event, str(event["text_content"]))
-                    trace_message_list.append(event_description)
-                flag_scroll = True
-            elif cur_event == "click" or cur_event == "select":
-                flag_scroll = True
-                flag_input = True
-                event_description = get_text_by_event(cur_event, str(event["tag_name"]))
-                event_position = get_position_viewport(event["width"], event["height"], event["offset_x"], event["offset_y"])
-                trace_message_list.append(f"{event_description} at {event_position}")
-            elif cur_event == "beforeunload":
-                flag_scroll = True
-                flag_input = True
-                event_description = get_text_by_event(cur_event, str(event["text_content"]))
-                trace_message_list.append(event_description)
+            else:
+                if str(event["text_content"]) != "" and str(event["tag_name"]) != "SIDEBAR-TAB":
+                    width = 0 if event["width"] == None else event["width"]
+                    height = 0 if event["height"] == None else event["height"]
+                    event_position = get_position_viewport(int(width), int(height), int(event["offset_x"]), int(event["offset_y"]))
+                    event_description = get_text_by_event(cur_event, str(event["text_content"]), event_position)
+                    if event_description != "No description":
+                        trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+    if len(text_key_down) != 0:
+        event_description = get_text_by_event("keydown", text_key_down, "")
+        trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+
     trace_message = "<ul><li>" + "</li><li>".join(trace_message_list) + "</li></ul>"
     return trace_message
 
@@ -302,25 +322,23 @@ def get_keyboard(text_keydown, content):
         return text_keydown
     return text_keydown + content
 
-def get_text_by_event(event_type, text_content):
+def get_text_by_event(event_type, text_content, event_position):
+    if len(text_content) > 20:
+        text_content = text_content[0:20] + "..."
     if event_type == "click":
-        if len(text_content.strip()) == 0:
-            return "Click"
-        return "Click on the " + text_content.replace("  ", " ").replace("\n", " ")
+        return 'Click on "' + text_content.replace("  ", " ").replace("\n", " ") + '" at ' + event_position
     elif event_type == "scroll":
-        return text_content.capitalize() + " in the web page"
+        return text_content.lower().capitalize() + " on the web page"
     elif event_type == "select":
-        return "Select information"
+        return 'Select  "' + text_content + '" at ' + event_position
     elif event_type == "keydown":
-        return "Input/Modify information"
-    elif event_type == "beforeunload":
-        return "Entering a different page/mode"
+        return 'Type "' + text_content + '"'
     else:
         return "No description"
 
 def get_position_viewport(port_x, port_y, offset_x, offset_y):
-    if port_y / 3 <= offset_y <= port_y * 2 / 3 and port_x / 3 <= offset_x <= port_x * 2 / 3:
-        return "center"
+    # if port_y / 3 <= offset_y <= port_y * 2 / 3 and port_x / 3 <= offset_x <= port_x * 2 / 3:
+    #     return "center"
     height = ""
     width = ""
     if port_y/2 > offset_y:
