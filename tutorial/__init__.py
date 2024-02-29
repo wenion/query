@@ -276,7 +276,7 @@ def expert_replay(trace):
                 text_key_down = ""
             if flag_scroll:
                 flag_scroll = False
-            trace_message_list.append(f"Navigate to {event['base_url']}")
+            #trace_message_list.append(f"Navigate to {event['base_url']}")
             pre_url = str(event["base_url"])
         else:
             pre_url = str(event["base_url"])
