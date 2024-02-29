@@ -230,7 +230,7 @@ def task_classification(request):
         trace_info = expert_trace[list(expert_trace.keys())[-1]]
         trace_message = expert_replay(trace_info)
 
-                            # "Adding Moodle Forum": None,
+                            #     "Adding Moodle Forum": None,
                             #     "Embedding Moodle Media Resource": None,
                             #     "Updating Moodle Information": None,
                             #     "Embedding Moodle Resource in Assessment": None,
@@ -272,7 +272,7 @@ def expert_replay(trace):
             if flag_input:
                 flag_input = False  # user finishes inputting
                 event_description = get_text_by_event("keydown", text_key_down, "")
-                trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+                trace_message_list.append(f"{event_description}<br><small>url: <a href='{pre_url}'>{pre_url}</a><br>position: N/A</small>")
                 text_key_down = ""
             if flag_scroll:
                 flag_scroll = False
@@ -286,13 +286,13 @@ def expert_replay(trace):
                 if flag_input:
                     flag_input = False  # user finishes inputting
                     event_description = get_text_by_event("keydown", text_key_down, "")
-                    trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+                    trace_message_list.append(f"{event_description}<br><small>url: <a href='{pre_url}'>{pre_url}</a><br>position: N/A</small>")
                     text_key_down = ""
 
                 if not flag_scroll:
                     flag_scroll = True  # user is currently scrolling
                     event_description = get_text_by_event(cur_event, str(event["text_content"]).split(":")[0], "")
-                    trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+                    trace_message_list.append(f"{event_description}<br><small>url: <a href='{pre_url}'>{pre_url}</a><br>position: N/A</small>")
 
             elif cur_event == "keydown":
                 text_key_down = get_keyboard(text_key_down, str(event["text_content"]))
@@ -307,7 +307,7 @@ def expert_replay(trace):
                     event_position = get_position_viewport(int(width), int(height), int(event["offset_x"]), int(event["offset_y"]))
                     event_description = get_text_by_event(cur_event, str(event["text_content"]), event_position)
                     if event_description != "No description":
-                        trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
+                        trace_message_list.append(f"{event_description}<br><small>url: <a href='{pre_url}'>{pre_url}</a><br>position: {event_position}</small>")
     if len(text_key_down) != 0:
         event_description = get_text_by_event("keydown", text_key_down, "")
         trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
