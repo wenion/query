@@ -312,7 +312,7 @@ def expert_replay(trace):
         event_description = get_text_by_event("keydown", text_key_down, "")
         trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
 
-    trace_message = "<ul><li>" + "</li><li>".join(trace_message_list) + "</li></ul>"
+    trace_message = "<div style='max-height: 500px; overflow-y: auto'><ul><li>" + "</li><li>".join(trace_message_list) + "</li></ul></div>"
     return trace_message
 
 def get_keyboard(text_keydown, content):
