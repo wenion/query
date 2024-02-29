@@ -13,14 +13,17 @@ from datetime import datetime, timedelta
 import numpy as np
 import pickle
 import urllib.parse
+import string
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 # load task model
-with open("model/task_model_with_context.pkl", "rb") as f:
-    task_model = pickle.load(f)
+with open("model/six_class_task_model_with_context.pkl", "rb") as f:
+    task_model_six = pickle.load(f)
+with open("model/three_class_task_model_with_context.pkl", "rb") as f:
+    task_model_three = pickle.load(f)
 # load vectorizer
 with open("model/context_vectorizer.pkl", "rb") as f:
     vectorizer = pickle.load(f)
@@ -75,7 +78,7 @@ def query(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 20000}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 10000}
     # get current time
     current_time = datetime.now()
     if "userid" not in request.params:
@@ -87,12 +90,13 @@ def task_classification(request):
         push_status[user_id] = {"Adding Moodle Forum": None,
                                 "Embedding Moodle Media Resource": None,
                                 "Updating Moodle Information": None,
-                                "Embedding Moodle Resource in Assessment": None,
+                                "Updating Assessment Information": None,
                                 "Embedding Moodle Media Resource in Weekly Content": None,
                                 "Updating Unit Information": None,
-                                "Updating Consultation Information": None}
+                                "Updating Consultation Information": None,
+                                "Updating Weekly Information": None}
     basic_info = current_time.strftime('%Y-%m-%d %H:%M:%S') + " " + user_id
-    interval = 20000
+    interval = 1000
     if "interval" in request.params:
         interval = request.params.get("interval")
         interval = int(interval)
@@ -101,13 +105,13 @@ def task_classification(request):
         print(basic_info + ": Invalid interval")
         return invalid_result
 
-    time_delta_in_second = 20
+    time_delta_in_second = 10
 
     if trace is None or len(trace) == 0:
         print(basic_info + ": No trace found")
         return invalid_result
 
-    target_events = ['beforeunload', 'click', 'keydown', 'open', 'scroll', 'select', 'server-record', 'submit']
+    target_events = ['START', 'beforeunload', 'click', 'close', 'keydown', 'onmouseover', 'open', 'scroll', 'select', 'server-record', 'submit']
     stop_words = set(stopwords.words('english'))
     # converting timestamp
     trace["timestamp"] = pd.to_datetime(trace["timestamp"], unit="ms")
@@ -142,28 +146,28 @@ def task_classification(request):
         return invalid_result
     data = [dt]
     # contextual features
-    urls = records["base_url"].tolist()
+    urls = records["base_url"].unique()
     main_urls = set()
     param = set()
     params = {} # hard code part
     for url in urls:
+        if type(url) != str:
+            continue
         if "?" in url:
             parts = url.split("?")
             if len(parts) != 2:
                 continue
-            first_part, second_part = parts
-            main_urls.add(first_part.split("/")[-1])
+            first, second = parts
+            new_url = ''.join(char for char in first if char not in string.punctuation)
+            main_urls.add(new_url)
             # Parse the URL string
             parsed_url = urllib.parse.urlparse(url)
+            if "#" in url:
+                params.add(''.join(char for char in parsed_url.fragment if char not in string.punctuation))
             # Get the query parameters as a dictionary
             query_params = urllib.parse.parse_qs(parsed_url.query)
-            for key in query_params.keys():
-                param.add(key)
             for key, value in query_params.items():
-                # hard code part
-                if key not in params:
-                    params[key] = []
-                params[key].append(value)
+                param.add(''.join(char for char in f"{key}{value}" if char not in string.punctuation))
     context_info = ""
     # for i, r in records.iterrows():
     #     if r["tag_name"].upper() != "SUBMIT" and len(r["text_content"]) != 0:
@@ -184,41 +188,16 @@ def task_classification(request):
 
     combined_data = [data[0] + list(transformed_context_data[0].toarray()[0])]
 
-    pred = task_model.predict(combined_data)[0]
-    prob = task_model.predict_proba(combined_data)[0]
-    
-    print(basic_info, ":", pred, max(prob))
-    prob_task = {
-        "Adding Moodle Forum": 0.75,
-        "Embedding Moodle Media Resource": 0.4,
-        "Updating Moodle Information": 0.75
-    }
-    if max(prob) <= prob_task[pred]:
-        return invalid_result
-    # expert_trace_dict = {
-    #     "Updating Moodle Information": "<ol><li>Click on the button 'Turn editing on'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/updating%20moodle%20information%20step%201.png' style='max-width=80%'></li><li>Go to the moodle section, click 'Edit settings'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/updating%20moodle%20information%20step%202.png' style='max-width=80%'></li><li>Make changes, save the changes and 'Turn edit off'</li></ol>",
-    #     "Embedding Moodle Media Resource": "<ol><li>Go to the moodle section, click 'Edit settings'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/embedding%20moodle%20media%20resource%20step%201.png' style='max-width=80%'></li><li>In the text edit panel, click 'Insert moodle media'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/embedding%20moodle%20media%20resource%20step%202.jpg' style='max-width=80%'></li><li>Insert video link</li><li>Save resources and 'Turn edit off'</li></ol>",
-    #     "Adding Moodle Forum": "<ol><li>Click on the button 'Add an activity or resource'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%201.png' max-width='80%' height='auto'></li><li>Select 'Forum'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%202.png' style='max-width=80%'></li><li>Select 'Forum type'<img src='https://colam.kmass.cloud.edu.au/static/Steve_Li/add%20moodle%20forum%20step%203.png' style='max-width=80%'></li><li>Save the forum and 'Turn edit off'</li></ol>"
-    # }
+    pred = task_model_six.predict(combined_data)[0]
+    prob = task_model_six.predict_proba(combined_data)[0]
 
-    # hard code part
-    if "section" in params:
-        section_ids = params["section"]
-        if pred == "Embedding Moodle Media Resource":
-            if section_ids.count("4") >= 1:
-                pred = "Embedding Moodle Resource in Assessment"
-            else:
-                vals, counts = np.unique(section_ids, return_counts=True)
-                for a, b in zip(vals, counts):
-                    if a > "4" and b >= 1:
-                        pred = "Embedding Moodle Media Resource in Weekly Content"
-        elif pred == "Updating Moodle Information":
-            if section_ids.count("0") >= 1:
-                pred = "Updating Unit Information"
-            elif section_ids.count("2") >= 1:
-                pred = "Updating Consultation Information"
-    else:
-        print(basic_info, ":", "Cannot find section information")
+    if max(prob) <= 0.8:
+        pred = task_model_three.predict(combined_data)[0]
+        prob = task_model_three.predict_proba(combined_data)[0]
+
+    print(basic_info, ":", pred, max(prob))
+    if max(prob) <= 0.8:
+        return invalid_result
 
     trace_message = ""
     expert_trace = fetch_all_events_by_task_name(pred)
@@ -229,15 +208,6 @@ def task_classification(request):
     else:
         trace_info = expert_trace[list(expert_trace.keys())[-1]]
         trace_message = expert_replay(trace_info)
-
-                            #     "Adding Moodle Forum": None,
-                            #     "Embedding Moodle Media Resource": None,
-                            #     "Updating Moodle Information": None,
-                            #     "Embedding Moodle Resource in Assessment": None,
-                            #     "Embedding Moodle Media Resource in Weekly Content": None,
-                            #     "Updating Unit Information": None,
-                            #     "Updating Consultation Information": None
-
 
     if not push_status[user_id][pred]:
         push_status[user_id][pred] = datetime.now()
