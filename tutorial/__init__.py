@@ -9,10 +9,12 @@ import sys
 import os
 import shutil
 import urllib.parse
+import requests
 #from ruamel import yaml
-sys.path.insert(0, '/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/Data_KMASS/all_data')
-from main import *
-from gen_retrieval import *
+#sys.path.insert(0, '/home/ubuntu/KMASS-monash/DSI/Neural-Corpus-Indexer-NCI-main/Data_KMASS/all_data')
+#import main
+#from main import *
+#from gen_retrieval import *
 #import gen_retrieval
 
 class Document:
@@ -24,6 +26,15 @@ class Document:
 @view_config(route_name='hello', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
 def hello_world(request):
     return {'Hello':'world'}
+
+
+@view_config(route_name="embed", request_method='GET', renderer="json")
+def embed(request):
+    query = request.GET.get("q")
+    params = {"q": query}
+    response = requests.get("localhost:6544/query", params=params)
+    print("response", response)
+    return response
 
 
 @view_config(route_name='query', request_method='GET', renderer='json')
@@ -49,14 +60,15 @@ def query(request):
     if querying is None or len(querying) == 0:
         return response
 
-    kn = request.registry['kn']
+    #kn = request.registry['kn']
     querying_list = []
     querying_list.append(querying)
-    try:
+    '''try:
         response_list = kn.query_retrieval(querying_list)
     except Exception as e:
         status = str(e)
     # print('response_list', response_list)
+    
 
     priority_result = []
     count = 0
@@ -83,11 +95,11 @@ def query(request):
             }
             
             # if dsi results overlap with embedding results
-            if title in dsi_results:
-                priority_result.append(item)
-                dsi_results.remove(title)
-            else:
-                results.append(item)
+            # if title in dsi_results:
+            #     priority_result.append(item)
+            #    dsi_results.remove(title)
+            #else:
+            results.append(item)
             # print('result id ', rcount, result, type(result.metadata), item, '\n')
             rcount += 1
 
@@ -96,14 +108,14 @@ def query(request):
         for key, value in enumerate(dsi_results):
             item = {'id':rcount + key, 'page_content': '', 'metadata':{'title': value, }}
             post_dsi_results.append(item)
-        results = priority_result + results + post_dsi_results
+        # results = priority_result + results + post_dsi_results
         print('len', len(results))
         topics.append(results)
         count += 1
         # print('\n\n')
     # status = "openai.error.RateLimitError: You exceeded your current quota, please check your plan and billing details."
     # status = "200"
-
+    '''
     response['status'] = status
     response['context'] = topics
     return response
@@ -209,15 +221,16 @@ def delete(request):
 
 def main(global_config, **settings):
     # kn = Knowledge_Nuggest(['PolicyBank-pdf', 'TeachHQ-video', 'ExaminerReport-json'])
-    kn = KN()
+    #kn = KN()
     dsi_model = DSI()
 
     config = Configurator(settings=settings)
-    config.registry["kn"] = kn
+    #config.registry["kn"] = kn
     config.registry["dsi"] = dsi_model
 
     config.include("pyramid_jinja2")
     config.add_route('query', 'query')
+    config.add_route('embed', 'embed')
     config.add_route('search', 'search')
     config.add_route('hello', '/')
     config.add_route('upload', '/upload')
