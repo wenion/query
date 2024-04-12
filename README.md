@@ -56,3 +56,8 @@ screen -r xxx是打开已有的窗口
 ### run
 
 pserve query/development.ini
+
+### relationship
+
+* DSI - jimwenDsi - MMGR2 - python gen_retrieval.py 6544
+* EMB - jimwenEmb - mymat - python main.py 6543
