@@ -208,6 +208,17 @@ def fetch_all_events_by_task_name(task_name):
         "total": len(updated_table_result),
     }
 
+def fetch_all_events_by_user_task_name(user_id, task_name):
+    result = UserEvent.find((UserEvent.userid == user_id) & (UserEvent.task_name == task_name)).sort_by("timestamp").all()
+    table_result = []
+    for index, item in enumerate(result):
+        json_item = {'id': index, **get_user_event(item.pk)}
+        table_result.append(json_item)
+    return {
+        "table_result": table_result,
+        "total": len(table_result),
+    }
+
 def is_session_by_expert(session_id):
     result = UserEvent.find(UserEvent.session_id == session_id).first()
     if result:
@@ -265,6 +276,18 @@ def fetch_all_user_sessions(userid):
 #     base_url: str = Field(index=True)
 #     userid: str = Field(index=True)
 
+def fetch_all_user_event_within_time(userid, timestamp):
+    result = UserEvent.find(
+        UserEvent.timestamp >= timestamp
+    ).all()
+    table_result=[]
+    for index, item in enumerate(result):
+        json_item = {'id': index, **get_user_event(item.pk)}
+        table_result.append(json_item)
+    return {
+        "table_result": table_result,
+        "total": len(result),
+        }
 
 def fetch_all_user_event(userid, sortby):
     result = UserEvent.find(
