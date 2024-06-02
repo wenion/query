@@ -178,14 +178,14 @@ def task_classification(request):
     current_time = int(time.time() * 1000)
     result = fetch_all_user_event_within_time(user_id, current_time)
     trace = pd.DataFrame(result["table_result"])
-    interval = 1000
+    interval = 10000
     if "interval" in request.params:
         interval = request.params.get("interval")
         interval = int(interval)
 
     if interval == 0:
         print(user_id + ": Invalid interval")
-        return invalid_result
+        return {"task_name": "", "certainty": 0, "message": "", "interval": 5000}
 
     time_delta_in_second = 10
 
@@ -201,7 +201,7 @@ def task_classification(request):
 
     match_scores = dict(sorted(match_scores.items(), key=lambda item: item[1], reverse=True))
     task = list(match_scores.keys())[0]
-    if match_scores[task] == 0.0:
+    if match_scores[task] <= 0.10:
         print(user_id + ": No task matching")
         return invalid_result
     return {
