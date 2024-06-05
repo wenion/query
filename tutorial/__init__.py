@@ -3,7 +3,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
-from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_events_by_user_task_name, fetch_all_user_event_within_time
+from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_events_by_user_task_name, fetch_all_user_event_within_time, create_process_model, delete_process_model, fetch_all_process_model
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -16,17 +16,21 @@ from pm4py.algo.conformance.tokenreplay.variants import token_replay
 import pm4py
 import os
 import time
+import io
 
 push_status = {}
 translation_table = str.maketrans(string.punctuation, '_'*len(string.punctuation))
 all_process_models = {}
 
-def load_process_models():
-    process_model_files = os.listdir("process_models")
-    process_model_files = [f for f in process_model_files if f.endswith("pnml")]
-    for f in process_model_files:
-        net, im, fm = pm4py.read_pnml(f"process_models/{f}")
-        all_process_models[f.replace(".pnml", "")] = (net, im, fm)
+
+def load_all_process_models():
+    process_models = fetch_all_process_model()
+    if process_models:
+        for pm in process_models:
+            file_object = io.StringIO(pm.pm_content)
+            net, im, fm = pm4py.read_pnml(file_object)
+            all_process_models[pm.pm_name] = (net, im, fm)
+
 
 def convert_log_to_formatted(event_log):
     activity = []
@@ -108,8 +112,14 @@ def create_process_model(request):
             "message": "ShareFlow name missing. Cannot create process model",
             "created": False
         }
+    if "groupid" not in request.params:
+        return {
+            "message": "Group information not found for the ShareFlow.",
+            "created": False
+        }
     user_id = request.params.get("userid")
     shareflow_name = request.params.get("shareflow_name")
+    group_id = request.params.get("groupid")
     result = fetch_all_events_by_user_task_name(user_id, shareflow_name)
     if not result or not result["table_result"] or result["total"] == 0:
         return {
@@ -125,15 +135,32 @@ def create_process_model(request):
             "created": False
         }
     sf_name = shareflow_name.translate(translation_table)
-    pm4py.write_pnml(net, im, fm, f"process_models/{sf_name}.pnml")
-    all_process_models[sf_name] = (net, im, fm)
+    current_timestamp = int(datetime.now() * 1000)
+    file_path = f"process_models/{sf_name}_{current_timestamp}.pnml"
+    pm4py.write_pnml(net, im, fm, file_path)
+    try:
+        with open(file_path, 'r') as file:
+            pnml_data = file.read()
+            status = create_process_model(creator=user_id, create_time=current_timestamp, group=group_id, pm_name=shareflow_name, pm_content=pnml_data)
+            if not status:
+                print("Error occurred during the creation of process model.")
+                return {
+                    "message": "Error occurred during the creation of process model.",
+                    "created": False
+                }
+    except FileNotFoundError:
+        print("File not found. Please check the file path.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    os.remove(file_path)
+    all_process_models[shareflow_name] = (net, im, fm)
     return {
         "message": "Process model created",
         "created": True
     }
 
 @view_config(route_name="delete_process_model", request_method="GET", renderer="json")
-def create_process_model(request):
+def delete_process_model(request):
     if "userid" not in request.params:
         return {
             "message": "User ID missing. Cannot delete process model",
@@ -152,16 +179,9 @@ def create_process_model(request):
             "message": "Invalid User ID or ShareFlow name. Cannot delete process model",
             "removed": False
         }
-    sf_name = shareflow_name.translate(translation_table)
-    if sf_name in all_process_models:
-        del all_process_models[sf_name]
-    try:
-        os.remove(f"process_models/{sf_name}.pnml")
-    except:
-        return {
-            "message": "Process model doesn't exist",
-            "removed": False
-        }
+    if shareflow_name in all_process_models:
+        del all_process_models[shareflow_name]
+    delete_process_model(shareflow_name, user_id)
     return {
         "message": "Process model deleted",
         "removed": True
@@ -470,7 +490,7 @@ def main(global_config, **settings):
 
 
     userid = "acct:admin@localhost"
-    #print(fetch_user_event(userid, 0, 1, "timestamp"))
+    print(fetch_user_event(userid, 0, 1, "timestamp"))
 
     config.add_route('query', 'query')
     config.add_route('search', 'search')

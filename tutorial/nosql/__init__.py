@@ -5,6 +5,7 @@ import pytz
 
 from redis_om import Migrator
 from redis_om import Field, JsonModel, EmbeddedJsonModel
+
 #from pydantic import NonNegativeInt
 from typing import Optional
 
@@ -17,6 +18,7 @@ __all__ = (
     "UserEvent",
     #"Rating",
     "UserFile",
+    "ProcessModel"
 )
 
 
@@ -33,6 +35,16 @@ class UserRole(EmbeddedJsonModel):
     years_of_experience: int = Field(index=True)
     expert: int = Field(index=True)
 
+class ProcessModel(JsonModel):
+    class Meta:
+        global_key_prefix = 'h'
+        model_key_prefix = 'ProcessModel'
+    pmid: int = Field(index=True)
+    creator: str = Field(index=True) #userid in UserRole
+    create_time: int = Field(index=True) # the time process model is created
+    group: str = Field(index=True) #the permitted groups for the ShareFlow public_id
+    pm_name: str = Field(index=True)#process model name
+    pm_content: str = Field(index=True)# process model content
 
 class Result(JsonModel):
     class Meta:
@@ -459,55 +471,6 @@ def get_user_role(request):
     return user_role
 
 
-# def check_redis_keys(username, authority):
-#     userid = f"acct:{username}@{authority}"
-#     user_role = UserRole.find(
-#         UserRole.userid == userid
-#     ).all()
-
-#     if not len(user_role):
-#         user_role_kwargs = {
-#             "userid": userid,
-#             "faculty": "",
-#             "teaching_role": "",
-#             "teaching_unit": "",
-#             "campus": "",
-#             "joined_year": 0,
-#             "years_of_experience": 0,
-#             "expert": 0,
-#         }
-#         user_role = UserRole(**user_role_kwargs)
-#         # user_role.save()
-
-
-# def attach_sql(config):
-#     engine = config.registry["sqlalchemy.engine"]
-#     try:
-#         result = engine.execute('SELECT username, authority FROM public."user";')
-#     except Exception as e:
-#         log.exception("unable to attach sql")
-#     else:
-#         rows = result.fetchall()
-#         for row in rows:
-#             check_redis_keys(row[0], row[1])
-#         result.close()
-
-
-# def get_highlights_from_openai(query, page_content):
-#     try:
-#         response = openai.ChatCompletion.create(  # openai.openai_object.OpenAIObject
-#             model="gpt-3.5-turbo-0613",
-#             messages=[
-#                 {"role": "user", "content": 'for this page content "{}", can you please generate a list of highlight (max 5) about this user query "{}", each highlight item can be a max of 10 words'.format(page_content, query)},
-#             ],
-#             temperature=0,
-#         )
-#         response_message = response["choices"][0]["message"]["content"]
-#     except Exception as e:
-#         return {"error" : repr(e)}
-#     return {"succ": response_message}
-
-
 def create_user_event(event_type, tag_name, text_content, base_url, userid):
     return {
         "event_type": event_type,
@@ -533,6 +496,66 @@ def save_in_redis(event):
     else:
         return {"error": str(event)}
 
+
+def fetch_all_process_model():
+    query = ProcessModel.find()
+    all_models = query.all()
+    return all_models if len(all_models) > 0 else None
+
+
+def fetch_process_model_by_name_creator(name, creator):
+    query = ProcessModel.find((ProcessModel.pm_name == name) & (ProcessModel.creator == creator))
+    total = query.all()
+    return total[0] if len(total) > 0 else None
+
+
+def get_process_model(pk):
+    process_model = ProcessModel.get(pk)
+    process_model_dict = process_model.dict()
+    return process_model_dict
+
+
+def create_process_model(
+        pmid,
+        creator,
+        create_time,
+        group,
+        pm_name,
+        pm_content,):
+    process_model = ProcessModel(
+        pmid = pmid,
+        creator = creator,
+        create_time = create_time,
+        group = group,
+        pm_name = pm_name,
+        pm_content = pm_content,
+    )
+    process_model.save()
+    return process_model
+
+
+def update_process_model(name, creator, update):
+    process_model = fetch_process_model_by_name_creator(name, creator)
+    if process_model:
+        # process_model.creator = update.get('creator')
+        # process_model.group = update.get('group')
+        # process_model.pm_name = update.get('pm_name')
+        process_model.pm_content = update.get('pm_content')
+
+        process_model.save()
+        return process_model
+    else:
+        return None
+
+
+def delete_process_model(name, creator):
+    try:
+        pm = fetch_process_model_by_name_creator(name, creator)
+        pm.delete()
+    except:
+        return False
+    else:
+        return True
 
 def includeme(config):
     # config.add_request_method(get_user_role, name="user_role", property=True)
