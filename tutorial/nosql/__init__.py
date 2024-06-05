@@ -39,7 +39,6 @@ class ProcessModel(JsonModel):
     class Meta:
         global_key_prefix = 'h'
         model_key_prefix = 'ProcessModel'
-    pmid: int = Field(index=True)
     creator: str = Field(index=True) #userid in UserRole
     create_time: int = Field(index=True) # the time process model is created
     group: str = Field(index=True) #the permitted groups for the ShareFlow public_id
@@ -516,14 +515,12 @@ def get_process_model(pk):
 
 
 def create_process_model(
-        pmid,
         creator,
         create_time,
         group,
         pm_name,
         pm_content,):
     process_model = ProcessModel(
-        pmid = pmid,
         creator = creator,
         create_time = create_time,
         group = group,
