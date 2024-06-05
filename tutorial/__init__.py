@@ -102,7 +102,7 @@ def query(request):
     return {'Hello': 'query'}
 
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
-def create_process_model(request):
+def create_pm(request):
     if "userid" not in request.json_body:
         return {
             "message": "User ID missing. Cannot create process model",
@@ -169,7 +169,7 @@ def create_process_model(request):
     }
 
 @view_config(route_name="delete_process_model", request_method="POST", renderer="json")
-def delete_process_model(request):
+def delete_pm(request):
     if "userid" not in request.json_body:
         return {
             "message": "User ID missing. Cannot delete process model",
@@ -504,8 +504,8 @@ def main(global_config, **settings):
     config.add_route('query', 'query')
     config.add_route('search', 'search')
     config.add_route('hello', '/')
-    config.add_route("create_process_model", "create_process_model")
-    config.add_route("delete_process_model", "delete_process_model")
+    config.add_route("create_pm", "create_process_model")
+    config.add_route("delete_pm", "delete_process_model")
     config.add_route("task_classification", "task_classification")
     load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
