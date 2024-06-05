@@ -551,7 +551,10 @@ def update_process_model(name, creator, update):
 def delete_process_model(name, creator):
     try:
         pm = fetch_process_model_by_name_creator(name, creator)
-        ProcessModel.delete(pm.pk)
+        if pm:
+            ProcessModel.delete(pm.pk)
+        else:
+            print("Cannot fine PM to be deleted.")
     except:
         return False
     else:
