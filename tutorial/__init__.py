@@ -30,6 +30,7 @@ def load_all_process_models():
             file_object = io.StringIO(pm.pm_content)
             net, im, fm = pm4py.read_pnml(file_object)
             all_process_models[pm.pm_name] = (net, im, fm)
+            print(f"Process Model for {pm.pm_name} loaded.")
 
 
 def convert_log_to_formatted(event_log):
