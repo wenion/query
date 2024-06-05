@@ -109,7 +109,7 @@ class UserEvent(JsonModel):
         model_key_prefix = 'UserEvent'
     event_type: str = Field(index=True, full_text_search=True)
     timestamp: int = Field(index=True)
-    tag_name: str = Field(index=True)     # Result pk
+    tag_name: str = Field(index=True)
     text_content: str = Field(index=True)
     base_url: str = Field(index=True)
     userid: str = Field(index=True)
@@ -126,6 +126,8 @@ class UserEvent(JsonModel):
     task_name: Optional[str] = Field(full_text_search=True, sortable=True)
     width: Optional[int] = Field(full_text_search=True, sortable=True)
     height: Optional[int] = Field(full_text_search=True, sortable=True)
+    image: Optional[str]
+    title: Optional[str] = Field(full_text_search=True, sortable=True)
 
 
 def add_user_event(
@@ -147,6 +149,8 @@ def add_user_event(
         task_name=None,
         width=0,
         height=0,
+        image=None,
+        title=None,
         ):
     user_event = UserEvent(
         userid=userid,
@@ -168,6 +172,8 @@ def add_user_event(
         task_name=task_name,
         width=width,
         height=height,
+        image=image,
+        title=title,
     )
     user_event.save()
     return user_event
@@ -198,7 +204,10 @@ def get_user_event(pk):
         'task_name': user_event.task_name,
         'width': user_event.width,
         'height': user_event.height,
+        'image': user_event.image,
+        'title': user_event.title,
     }
+
 
 def fetch_all_events_by_task_name(task_name):
     result = UserEvent.find(UserEvent.task_name == task_name).sort_by("timestamp").all()
@@ -219,6 +228,7 @@ def fetch_all_events_by_task_name(task_name):
         "total": len(updated_table_result),
     }
 
+
 def fetch_all_events_by_user_task_name(user_id, task_name):
     result = UserEvent.find((UserEvent.userid == user_id) & (UserEvent.task_name == task_name)).sort_by("timestamp").all()
     table_result = []
@@ -230,13 +240,6 @@ def fetch_all_events_by_user_task_name(user_id, task_name):
         "total": len(table_result),
     }
 
-def is_session_by_expert(session_id):
-    result = UserEvent.find(UserEvent.session_id == session_id).first()
-    if result:
-        userid = result.userid
-        if get_user_expertise(userid) == 1:
-            return True
-    return False
 
 def fetch_all_user_events_by_session(userid,sessionID):
     result = UserEvent.find((UserEvent.userid == userid) & (UserEvent.session_id == sessionID)).sort_by("timestamp").all()
@@ -250,6 +253,7 @@ def fetch_all_user_events_by_session(userid,sessionID):
         "table_result": table_result,
         "total": len(result),
         }
+
 
 def fetch_all_user_sessions(userid):
     result = UserEvent.find(UserEvent.userid == userid).all()
@@ -289,7 +293,8 @@ def fetch_all_user_sessions(userid):
 
 def fetch_all_user_event_within_time(userid, timestamp):
     result = UserEvent.find(
-        UserEvent.timestamp >= timestamp
+        (UserEvent.userid == userid) &
+        (UserEvent.timestamp >= timestamp)
     ).all()
     table_result=[]
     for index, item in enumerate(result):
