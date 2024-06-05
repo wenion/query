@@ -229,7 +229,7 @@ def task_classification(request):
         print(user_id + ": Not enough trace found", len(trace))
         return invalid_result
     formatted_trace = convert_log_to_formatted(trace)
-    print(formatted_trace["activity_key"].tolist())
+    print(formatted_trace["concept:name"].tolist())
     match_scores = {}
     for k, v in all_process_models.items():
         net, im, fm = v
