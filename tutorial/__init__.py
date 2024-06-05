@@ -151,8 +151,16 @@ def create_process_model(request):
                 }
     except FileNotFoundError:
         print("File not found. Please check the file path.")
+        return {
+            "message": "File not found during creation of process model. Please retry!",
+            "created": False
+        }
     except Exception as e:
         print(f"An error occurred: {e}")
+        return {
+            "message": f"An error occurred: {e}",
+            "created": False
+        }
     os.remove(file_path)
     all_process_models[shareflow_name] = (net, im, fm)
     return {
