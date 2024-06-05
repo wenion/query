@@ -233,6 +233,7 @@ def task_classification(request):
         match_scores[k] = fitness
 
     match_scores = dict(sorted(match_scores.items(), key=lambda item: item[1], reverse=True))
+    print(match_scores)
     task = list(match_scores.keys())[0]
     if match_scores[task] <= 0.10:
         print(user_id + ": No task matching")
