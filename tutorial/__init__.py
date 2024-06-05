@@ -38,7 +38,8 @@ def load_all_process_models():
 
 def convert_log_to_formatted(event_log):
     activity = []
-    event_log.sort_values(by=["time", "id"], ascending=[True, False], inplace=True)
+    event_log.sort_values(by=["timestamp"], ascending=[True], inplace=True)
+    event_log["time"] = pd.to_datetime(event_log["timestamp"], unit="ms")
     event_log = event_log.reset_index()
     for index, row in event_log.iterrows():
         text_content = ""
@@ -91,7 +92,6 @@ def create_process_model_from_log(event_log):
     if event_log is None or event_log.empty:
         print("Empty or invalid event log")
         return None, None, None
-    event_log["time"] = pd.to_datetime(event_log["timestamp"], unit="ms")
     formatted_event_log = convert_log_to_formatted(event_log)
     net, im, fm = pm4py.discover_petri_net_heuristics(formatted_event_log, activity_key="concept:name", case_id_key="case:concept:name", timestamp_key="time:timestamp")
     return net, im, fm
