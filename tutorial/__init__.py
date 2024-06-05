@@ -211,7 +211,7 @@ def task_classification(request):
         return invalid_result
     user_id = request.params.get("userid")
     current_time = datetime.now()
-    time_ago = current_time - timedelta(seconds=10)
+    time_ago = current_time - timedelta(seconds=5)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
@@ -222,7 +222,7 @@ def task_classification(request):
 
     if interval == 0:
         print(user_id + ": Invalid interval")
-        return {"task_name": "", "certainty": 0, "message": "", "interval": 5000}
+        return {"task_name": "", "certainty": 0, "message": "", "interval": 3000}
 
     time_delta_in_second = 10
 
@@ -230,6 +230,7 @@ def task_classification(request):
         print(user_id + ": Not enough trace found")
         return invalid_result
     formatted_trace = convert_log_to_formatted(trace)
+    print(len(formatted_trace))
     match_scores = {}
     for k, v in all_process_models.items():
         net, im, fm = v
