@@ -210,11 +210,6 @@ def task_classification(request):
     if "userid" not in request.params:
         return invalid_result
     user_id = request.params.get("userid")
-    current_time = datetime.now()
-    time_ago = current_time - timedelta(seconds=5)
-    time_ago = int(time_ago.timestamp() * 1000)
-    result = fetch_all_user_event_within_time(user_id, time_ago)
-    trace = pd.DataFrame(result["table_result"])
     interval = 10000
     if "interval" in request.params:
         interval = request.params.get("interval")
@@ -225,9 +220,13 @@ def task_classification(request):
         return {"task_name": "", "certainty": 0, "message": "", "interval": 3000}
 
     time_delta_in_second = 10
-
+    current_time = datetime.now()
+    time_ago = current_time - timedelta(seconds=5)
+    time_ago = int(time_ago.timestamp() * 1000)
+    result = fetch_all_user_event_within_time(user_id, time_ago)
+    trace = pd.DataFrame(result["table_result"])
     if trace is None or len(trace) <= 2:
-        print(user_id + ": Not enough trace found")
+        print(user_id + ": Not enough trace found", len(trace))
         return invalid_result
     formatted_trace = convert_log_to_formatted(trace)
     print(len(formatted_trace))
