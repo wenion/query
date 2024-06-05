@@ -35,6 +35,7 @@ class UserRole(EmbeddedJsonModel):
     years_of_experience: int = Field(index=True)
     expert: int = Field(index=True)
 
+
 class ProcessModel(JsonModel):
     class Meta:
         global_key_prefix = 'h'
@@ -44,6 +45,7 @@ class ProcessModel(JsonModel):
     group: str = Field(index=True) #the permitted groups for the ShareFlow public_id
     pm_name: str = Field(index=True)#process model name
     pm_content: str = Field(index=True)# process model content
+
 
 class Result(JsonModel):
     class Meta:
@@ -218,14 +220,10 @@ def fetch_all_events_by_task_name(task_name):
             if json_item["session_id"] not in table_result:
                 table_result[json_item["session_id"]] = []
             table_result[json_item["session_id"]].append(json_item)
-    updated_table_result = {}
-    for key, value in table_result.items():
-        if is_session_by_expert(key):
-            updated_table_result[key] = value
     # print(table_result)
     return {
-        "table_result": updated_table_result,
-        "total": len(updated_table_result),
+        "table_result": table_result,
+        "total": len(table_result),
     }
 
 
