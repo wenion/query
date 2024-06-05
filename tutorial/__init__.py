@@ -136,7 +136,7 @@ def create_process_model(request):
             "created": False
         }
     sf_name = shareflow_name.translate(translation_table)
-    current_timestamp = int(datetime.now() * 1000)
+    current_timestamp = int(datetime.now().timestamp() * 1000)
     file_path = f"process_models/{sf_name}_{current_timestamp}.pnml"
     pm4py.write_pnml(net, im, fm, file_path)
     try:
