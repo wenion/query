@@ -498,7 +498,7 @@ def main(global_config, **settings):
     config.add_route("create_process_model", "create_process_model")
     config.add_route("delete_process_model", "delete_process_model")
     config.add_route("task_classification", "task_classification")
-    load_process_models()
+    load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
     config.scan()
     return config.make_wsgi_app()
