@@ -168,7 +168,7 @@ def create_pm(request):
     all_process_models[shareflow_name] = (net, im, fm)
     parameters = {"format": "png"}
     gviz = visualizer.apply(net, im, fm, parameters=parameters)
-    visualizer.save(gviz, f"{sf_name}_{current_timestamp}.png")
+    visualizer.save(gviz, f"process_models/{sf_name}_{current_timestamp}.png")
     return {
         "message": "Process model created",
         "created": True
