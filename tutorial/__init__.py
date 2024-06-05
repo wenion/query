@@ -16,6 +16,8 @@ from pm4py.algo.conformance.tokenreplay.variants import token_replay
 import pm4py
 import os
 import time
+from pm4py.objects.petri_net.importer import importer as pnml_importer
+from pm4py.util.constants import DEFAULT_ENCODING
 import io
 
 push_status = {}
@@ -27,8 +29,8 @@ def load_all_process_models():
     process_models = fetch_all_process_model()
     if process_models:
         for pm in process_models:
-            file_object = io.StringIO(pm.pm_content)
-            net, im, fm = pm4py.read_pnml(file_object)
+            pm_string = pm.pm_content
+            net, im, fm = pnml_importer.deserialize(pm_string, parameters={"auto_guess_final_marking": False, "encoding": DEFAULT_ENCODING})
             all_process_models[pm.pm_name] = (net, im, fm)
             print(f"Process Model for {pm.pm_name} loaded.")
 
