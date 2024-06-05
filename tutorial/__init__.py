@@ -100,26 +100,26 @@ def hello_world(request):
 def query(request):
     return {'Hello': 'query'}
 
-@view_config(route_name="create_process_model", request_method="GET", renderer="json")
+@view_config(route_name="create_process_model", request_method="POST", renderer="json")
 def create_process_model(request):
-    if "userid" not in request.params:
+    if "userid" not in request.json_body:
         return {
             "message": "User ID missing. Cannot create process model",
             "created": False
         }
-    if "shareflow_name" not in request.params:
+    if "shareflow_name" not in request.json_body:
         return {
             "message": "ShareFlow name missing. Cannot create process model",
             "created": False
         }
-    if "groupid" not in request.params:
+    if "groupid" not in request.json_body:
         return {
             "message": "Group information not found for the ShareFlow.",
             "created": False
         }
-    user_id = request.params.get("userid")
-    shareflow_name = request.params.get("shareflow_name")
-    group_id = request.params.get("groupid")
+    user_id = request.json_body["userid"]
+    shareflow_name = request.json_body["shareflow_name"]
+    group_id = request.json_body["groupid"]
     result = fetch_all_events_by_user_task_name(user_id, shareflow_name)
     if not result or not result["table_result"] or result["total"] == 0:
         return {
@@ -159,20 +159,20 @@ def create_process_model(request):
         "created": True
     }
 
-@view_config(route_name="delete_process_model", request_method="GET", renderer="json")
+@view_config(route_name="delete_process_model", request_method="POST", renderer="json")
 def delete_process_model(request):
-    if "userid" not in request.params:
+    if "userid" not in request.json_body:
         return {
             "message": "User ID missing. Cannot delete process model",
             "removed": False
         }
-    if "shareflow_name" not in request.params:
+    if "shareflow_name" not in request.json_body:
         return {
             "message": "ShareFlow name missing. Cannot delete process model",
             "removed": False
         }
-    user_id = request.params.get("userid")
-    shareflow_name = request.params.get("shareflow_name")
+    user_id = request.json_body["userid"]
+    shareflow_name = request.json_body["shareflow_name"]
     result = fetch_all_events_by_user_task_name(user_id, shareflow_name)
     if not result or not result["table_result"] or result["total"] == 0:
         return {
