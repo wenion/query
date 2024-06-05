@@ -220,8 +220,8 @@ def task_classification(request):
 
     time_delta_in_second = 10
 
-    if trace is None or len(trace) == 0:
-        print(user_id + ": No trace found")
+    if trace is None or len(trace) <= 2:
+        print(user_id + ": Not enough trace found")
         return invalid_result
     formatted_trace = convert_log_to_formatted(trace)
     match_scores = {}
@@ -239,7 +239,7 @@ def task_classification(request):
         'task_name': task,
         "certainty": match_scores[task],
         'message': "",
-        'interval': 1000
+        'interval': 10000
     }
 
 
