@@ -18,6 +18,7 @@ import os
 import time
 from pm4py.objects.petri_net.importer import importer as pnml_importer
 from pm4py.util.constants import DEFAULT_ENCODING
+from pm4py.visualization.petri_net import visualizer
 import io
 
 push_status = {}
@@ -165,6 +166,9 @@ def create_pm(request):
         }
     os.remove(file_path)
     all_process_models[shareflow_name] = (net, im, fm)
+    parameters = {"format": "png"}
+    gviz = visualizer.apply(net, im, fm, parameters=parameters)
+    visualizer.save(gviz, f"{sf_name}_{current_timestamp}.png")
     return {
         "message": "Process model created",
         "created": True
