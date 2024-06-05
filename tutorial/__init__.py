@@ -230,10 +230,13 @@ def task_classification(request):
         return invalid_result
     formatted_trace = convert_log_to_formatted(trace)
     print(formatted_trace["concept:name"].tolist())
+    print(formatted_trace["time:timestamp"].tolist())
     match_scores = {}
     for k, v in all_process_models.items():
         net, im, fm = v
-        fitness = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm, activity_key="concept:name", case_id_key="case:concept:name", timestamp_key="time:timestamp")['average_trace_fitness']
+        replay_result = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm, activity_key="concept:name", case_id_key="case:concept:name", timestamp_key="time:timestamp")
+        print(replay_result)
+        fitness = replay_result['average_trace_fitness']
         match_scores[k] = fitness
 
     match_scores = dict(sorted(match_scores.items(), key=lambda item: item[1], reverse=True))
