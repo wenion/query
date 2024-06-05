@@ -131,7 +131,7 @@ def create_pm(request):
             "created": False
         }
     trace = pd.DataFrame(result["table_result"])
-    trace = trace[(trace["tag_name"] != "RECORD") & (not trace["tag_name"].str.startswith("HYPOTHESIS"))] # filter out RECORD events
+    trace = trace[(trace["tag_name"] != "RECORD") & (~trace["tag_name"].str.startswith("HYPOTHESIS"))] # filter out RECORD events
     net, im, fm = create_process_model_from_log(trace)
     if not net:
         return {
