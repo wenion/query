@@ -207,7 +207,7 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 10000}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 7000}
     # get current time
     current_time = datetime.now()
     if "userid" not in request.params:
@@ -221,7 +221,6 @@ def task_classification(request):
     if interval == 0:
         print(user_id + ": Invalid interval")
         return {"task_name": "", "certainty": 0, "message": "", "interval": 5000}
-    time_delta_in_second = 10
     current_time = datetime.now()
     time_ago = current_time - timedelta(seconds=7)
     time_ago = int(time_ago.timestamp() * 1000)
@@ -244,14 +243,28 @@ def task_classification(request):
     match_scores = dict(sorted(match_scores.items(), key=lambda item: item[1], reverse=True))
     print(match_scores)
     task = list(match_scores.keys())[0]
-    if match_scores[task] < 0.34:
+    match_score = match_scores[task]
+    if match_score < 0.34:
         print(user_id + ": No task matching")
         return invalid_result
+    count = 0
+    matched_tasks = []
+    for key, value in match_scores.items():
+        if value == match_score:
+            count += 1
+            matched_tasks.append(key)
+    if count > 1:
+        return {
+            "task_name": "; ".join(matched_tasks),
+            "certainty": match_score,
+            "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
+            "interval": 7000
+        }
     return {
         'task_name': task,
         "certainty": match_scores[task],
         'message': task,
-        'interval': 10000
+        'interval': 7000
     }
 
 
