@@ -223,7 +223,7 @@ def task_classification(request):
         return {"task_name": "", "certainty": 0, "message": "", "interval": 5000}
     time_delta_in_second = 10
     current_time = datetime.now()
-    time_ago = current_time - timedelta(seconds=8)
+    time_ago = current_time - timedelta(seconds=7)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
