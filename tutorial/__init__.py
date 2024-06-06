@@ -214,7 +214,7 @@ def task_classification(request):
     if "interval" in request.params:
         interval = request.params.get("interval")
         interval = int(interval)
-
+    print(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
     if interval == 0:
         print(user_id + ": Invalid interval")
         return {"task_name": "", "certainty": 0, "message": "", "interval": 3000}
