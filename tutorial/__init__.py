@@ -218,7 +218,7 @@ def task_classification(request):
     # if interval == 0:
     #     print(user_id + ": Invalid interval")
     #     return {"task_name": "", "certainty": 0, "message": "", "interval": 500}
-    time.sleep(5)
+    time.sleep(8)
     time_delta_in_second = 10
     current_time = datetime.now()
     time_ago = current_time - timedelta(seconds=10)
