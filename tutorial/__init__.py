@@ -170,6 +170,7 @@ def create_pm(request):
     parameters = {"format": "png"}
     gviz = visualizer.apply(net, im, fm, parameters=parameters)
     visualizer.save(gviz, f"process_models/{sf_name}_{current_timestamp}.png")
+    print(f"PM {shareflow_name} created by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
     return {
         "message": "Process model created",
         "created": True
@@ -198,6 +199,7 @@ def delete_pm(request):
     if shareflow_name in all_process_models:
         del all_process_models[shareflow_name]
     delete_process_model(shareflow_name, user_id)
+    print(f"PM {shareflow_name} deleted by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
     return {
         "message": "Process model deleted",
         "removed": True
@@ -242,7 +244,7 @@ def task_classification(request):
     match_scores = dict(sorted(match_scores.items(), key=lambda item: item[1], reverse=True))
     print(match_scores)
     task = list(match_scores.keys())[0]
-    if match_scores[task] <= 0.10:
+    if match_scores[task] < 0.34:
         print(user_id + ": No task matching")
         return invalid_result
     return {
