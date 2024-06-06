@@ -215,13 +215,13 @@ def task_classification(request):
         interval = request.params.get("interval")
         interval = int(interval)
 
-    if interval == 0:
-        print(user_id + ": Invalid interval")
-        return {"task_name": "", "certainty": 0, "message": "", "interval": 500}
-
+    # if interval == 0:
+    #     print(user_id + ": Invalid interval")
+    #     return {"task_name": "", "certainty": 0, "message": "", "interval": 500}
+    time.sleep(5)
     time_delta_in_second = 10
     current_time = datetime.now()
-    time_ago = current_time - timedelta(seconds=5)
+    time_ago = current_time - timedelta(seconds=10)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
