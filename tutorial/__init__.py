@@ -44,7 +44,7 @@ def convert_log_to_formatted(event_log):
     event_log = event_log.reset_index()
     for index, row in event_log.iterrows():
         text_content = ""
-        if not pd.isna(row["text_content"]) and row["event_type"] == "click" and row["tag_name"].lower() == "button":
+        if not pd.isna(row["text_content"]) and row["event_type"] == "click" and row["tag_name"].lower() in ["button", "a", "span"]:
             text_content = " " + str(row["text_content"])
         url = ""
         if type(row["base_url"]) == str:
