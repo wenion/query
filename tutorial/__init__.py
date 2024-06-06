@@ -38,6 +38,7 @@ def load_all_process_models():
 
 def convert_log_to_formatted(event_log):
     activity = []
+    event_log["event_type"] = event_log["event_type"].replace("recording", "open")
     event_log.sort_values(by=["timestamp"], ascending=[True], inplace=True)
     event_log["time"] = pd.to_datetime(event_log["timestamp"], unit="ms")
     event_log = event_log.reset_index()
@@ -217,10 +218,10 @@ def task_classification(request):
     print(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
     if interval == 0:
         print(user_id + ": Invalid interval")
-        return {"task_name": "", "certainty": 0, "message": "", "interval": 3000}
+        return {"task_name": "", "certainty": 0, "message": "", "interval": 5000}
     time_delta_in_second = 10
     current_time = datetime.now()
-    time_ago = current_time - timedelta(seconds=5)
+    time_ago = current_time - timedelta(seconds=8)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
