@@ -218,15 +218,12 @@ def task_classification(request):
     # if interval == 0:
     #     print(user_id + ": Invalid interval")
     #     return {"task_name": "", "certainty": 0, "message": "", "interval": 500}
-    time.sleep(3)
     time_delta_in_second = 10
     current_time = datetime.now()
-    time_ago = current_time - timedelta(seconds=10)
+    time_ago = current_time - timedelta(seconds=5)
     time_ago = int(time_ago.timestamp() * 1000)
-    result = fetch_all_user_event(user_id, "timestamp")
-    #result = fetch_all_user_event_within_time(user_id, time_ago)
+    result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
-    trace = trace[trace["timestamp"] >= time_ago]
     if trace is None or len(trace) < 2:
         print(user_id + ": Not enough trace found", len(trace))
         return invalid_result
