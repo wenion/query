@@ -132,7 +132,7 @@ def create_pm(request):
             "message": "Session ID not found. Cannot create process model",
             "created": False
         }
-    user_id = request.json_body["userid"]
+    user_id = request.json_body["user_id"]
     shareflow_name = request.json_body["shareflow_name"]
     session_id = request.json_body["session_id"]
     group_id = request.json_body["groupid"]
@@ -209,7 +209,7 @@ def delete_pm(request):
             "message": "Shareflow name not found. Cannot delete process model",
             "removed": False
         }
-    user_id = request.json_body["userid"]
+    user_id = request.json_body["user_id"]
     session_id = request.json_body["session_id"]
     shareflow_name = request.json_body["shareflow_name"]
     result = fetch_all_user_events_by_session(user_id, session_id)
