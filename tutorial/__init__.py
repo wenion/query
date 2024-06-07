@@ -135,7 +135,7 @@ def create_pm(request):
     user_id = request.json_body["user_id"]
     shareflow_name = request.json_body["shareflow_name"]
     session_id = request.json_body["session_id"]
-    group_id = request.json_body["groupid"]
+    group_id = request.json_body["group_id"]
     result = fetch_all_user_events_by_session(user_id, session_id)
     if not result or not result["table_result"] or result["total"] == 0:
         return {
