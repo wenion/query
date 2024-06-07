@@ -227,6 +227,7 @@ def task_classification(request):
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
     if len(trace) > 0:
+        pd.set_option('display.max_columns', None)
         print(trace[["event_type", "text_content", "tag_name", "base_url"]])
     if trace is None or len(trace) <= 2:
         print(user_id + ": Not enough trace found", len(trace))
