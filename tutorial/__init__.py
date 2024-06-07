@@ -32,8 +32,8 @@ def load_all_process_models():
         for pm in process_models:
             pm_string = pm.pm_content
             net, im, fm = pnml_importer.deserialize(pm_string, parameters={"auto_guess_final_marking": False, "encoding": DEFAULT_ENCODING})
-            all_process_models[pm.pm_name] = (net, im, fm)
-            print(f"Process Model for {pm.pm_name} loaded.")
+            all_process_models[f"{pm.pm_name}_[SEP]_{pm.session_id}"] = (net, im, fm)
+            print(f"Process Model for {pm.pm_name}_{pm.session_id} loaded.")
 
 
 def convert_log_to_formatted(event_log):
@@ -177,7 +177,7 @@ def create_pm(request):
             "created": False
         }
     os.remove(file_path)
-    all_process_models[f"{shareflow_name}_{session_id}"] = (net, im, fm)
+    all_process_models[f"{shareflow_name}_[SEP]_{session_id}"] = (net, im, fm)
     parameters = {"format": "png"}
     gviz = visualizer.apply(net, im, fm, parameters=parameters)
     visualizer.save(gviz, f"process_models/{sf_name}_{current_timestamp}.png")
@@ -219,7 +219,7 @@ def delete_pm(request):
             "removed": False
         }
     if f"{shareflow_name}_{session_id}" in all_process_models:
-        del all_process_models[f"{shareflow_name}_{session_id}"]
+        del all_process_models[f"{shareflow_name}_[SEP]_{session_id}"]
     delete_process_model(session_id, user_id)
     print(f"PM {shareflow_name}_{session_id} deleted by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
     return {
@@ -277,7 +277,7 @@ def task_classification(request):
     for key, value in match_scores.items():
         if value == match_score:
             count += 1
-            matched_tasks.append(key)
+            matched_tasks.append(key.split("_[SEP]_")[0])
     if count > 1:
         return {
             "task_name": "; ".join(matched_tasks),
@@ -285,10 +285,12 @@ def task_classification(request):
             "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
             "interval": 7000
         }
+    # in the process model dictionary storing all PMs in the current session, the keys are <PM_name>_[SEP]_<session_id>
+    # "_[SEP]_" is added as a separator, when displaying, it is important to exclude the session ID
     return {
-        'task_name': task,
+        'task_name': task.split("_[SEP]_")[0],
         "certainty": match_scores[task],
-        'message': task,
+        'message': task.split("_[SEP]_")[0],
         'interval': 7000
     }
 
