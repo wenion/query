@@ -3,7 +3,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
-from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_events_by_user_task_name, fetch_all_user_event_within_time, create_process_model, delete_process_model, fetch_all_process_model
+from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model, fetch_all_process_model
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -107,7 +107,7 @@ def query(request):
 
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
 def create_pm(request):
-    if "userid" not in request.json_body:
+    if "user_id" not in request.json_body:
         return {
             "message": "User ID missing. Cannot create process model",
             "created": False
@@ -117,15 +117,21 @@ def create_pm(request):
             "message": "ShareFlow name missing. Cannot create process model",
             "created": False
         }
-    if "groupid" not in request.json_body:
+    if "group_id" not in request.json_body:
         return {
             "message": "Group information not found for the ShareFlow.",
             "created": False
         }
+    if "session_id" not in request.json_body:
+        return {
+            "message": "Session ID not found. Cannot create process model",
+            "created": False
+        }
     user_id = request.json_body["userid"]
     shareflow_name = request.json_body["shareflow_name"]
+    session_id = request.json_body["session_id"]
     group_id = request.json_body["groupid"]
-    result = fetch_all_events_by_user_task_name(user_id, shareflow_name)
+    result = fetch_all_user_events_by_session(user_id, session_id)
     if not result or not result["table_result"] or result["total"] == 0:
         return {
             "message": "Invalid User ID or ShareFlow name. Cannot create process model",
@@ -146,7 +152,7 @@ def create_pm(request):
     try:
         with open(file_path, 'r') as file:
             pnml_data = file.read()
-            status = create_process_model(creator=user_id, create_time=current_timestamp, group=group_id, pm_name=shareflow_name, pm_content=pnml_data)
+            status = create_process_model(creator=user_id, create_time=current_timestamp, group=group_id, pm_name=shareflow_name, pm_content=pnml_data, session_id=session_id)
             if not status:
                 print("Error occurred during the creation of process model.")
                 return {
@@ -166,11 +172,11 @@ def create_pm(request):
             "created": False
         }
     os.remove(file_path)
-    all_process_models[shareflow_name] = (net, im, fm)
+    all_process_models[f"{shareflow_name}_{session_id}"] = (net, im, fm)
     parameters = {"format": "png"}
     gviz = visualizer.apply(net, im, fm, parameters=parameters)
     visualizer.save(gviz, f"process_models/{sf_name}_{current_timestamp}.png")
-    print(f"PM {shareflow_name} created by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
+    print(f"PM {shareflow_name}_{session_id} created by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
     return {
         "message": "Process model created",
         "created": True
@@ -178,28 +184,34 @@ def create_pm(request):
 
 @view_config(route_name="delete_process_model", request_method="POST", renderer="json")
 def delete_pm(request):
-    if "userid" not in request.json_body:
+    if "user_id" not in request.json_body:
         return {
             "message": "User ID missing. Cannot delete process model",
             "removed": False
         }
+    if "session_id" not in request.json_body:
+        return {
+            "message": "Session ID missing. Cannot delete process model",
+            "removed": False
+        }
     if "shareflow_name" not in request.json_body:
         return {
-            "message": "ShareFlow name missing. Cannot delete process model",
+            "message": "Shareflow name not found. Cannot delete process model",
             "removed": False
         }
     user_id = request.json_body["userid"]
+    session_id = request.json_body["session_id"]
     shareflow_name = request.json_body["shareflow_name"]
-    result = fetch_all_events_by_user_task_name(user_id, shareflow_name)
+    result = fetch_all_user_events_by_session(user_id, session_id)
     if not result or not result["table_result"] or result["total"] == 0:
         return {
-            "message": "Invalid User ID or ShareFlow name. Cannot delete process model",
+            "message": "Invalid User ID or Session ID. Cannot delete process model",
             "removed": False
         }
-    if shareflow_name in all_process_models:
-        del all_process_models[shareflow_name]
-    delete_process_model(shareflow_name, user_id)
-    print(f"PM {shareflow_name} deleted by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
+    if f"{shareflow_name}_{session_id}" in all_process_models:
+        del all_process_models[f"{shareflow_name}_{session_id}"]
+    delete_process_model(session_id, user_id)
+    print(f"PM {shareflow_name}_{session_id} deleted by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
     return {
         "message": "Process model deleted",
         "removed": True
