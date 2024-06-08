@@ -525,6 +525,9 @@ def create_process_model(
         pm_name,
         pm_content,
         session_id):
+    exist = fetch_process_model_by_session_creator(session_id, creator)
+    if exist:
+        return exist
     process_model = ProcessModel(
         creator = creator,
         create_time = create_time,
@@ -551,17 +554,25 @@ def update_process_model(session_id, creator, update):
         return None
 
 
-def delete_process_model(session_id, creator):
+def delete_process_model_by_session_creator(session_id, creator):
     try:
         pm = fetch_process_model_by_session_creator(session_id, creator)
         if pm:
             ProcessModel.delete(pm.pk)
         else:
-            print("Cannot find PM to be deleted.")
+            return False
     except:
         return False
     else:
         return True
+
+
+def delete_process_model(pk):
+    try:
+        ProcessModel.delete(pk)
+    except:
+        return False
+
 
 def includeme(config):
     # config.add_request_method(get_user_role, name="user_role", property=True)

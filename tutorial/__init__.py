@@ -3,7 +3,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
-from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model, fetch_all_process_model
+from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -20,6 +20,15 @@ from pm4py.objects.petri_net.importer import importer as pnml_importer
 from pm4py.util.constants import DEFAULT_ENCODING
 from pm4py.visualization.petri_net import visualizer
 import io
+import logging
+from logging.handlers import RotatingFileHandler
+
+logger = logging.getLogger("MyLogger")
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler("task_classification.log", maxBytes=1024000, backupCount=1000)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 push_status = {}
 translation_table = str.maketrans(string.punctuation, '_'*len(string.punctuation))
@@ -33,7 +42,7 @@ def load_all_process_models():
             pm_string = pm.pm_content
             net, im, fm = pnml_importer.deserialize(pm_string, parameters={"auto_guess_final_marking": False, "encoding": DEFAULT_ENCODING})
             all_process_models[f"{pm.pm_name}_[SEP]_{pm.session_id}"] = (net, im, fm)
-            print(f"Process Model for {pm.pm_name}_{pm.session_id} loaded.")
+            logger.info(f"Process Model for {pm.pm_name}_{pm.session_id} loaded.")
 
 
 def convert_log_to_formatted(event_log):
@@ -91,7 +100,7 @@ def convert_log_to_formatted(event_log):
 
 def create_process_model_from_log(event_log):
     if event_log is None or event_log.empty:
-        print("Empty or invalid event log")
+        logger.warning("Empty or invalid event log")
         return None, None, None
     formatted_event_log = convert_log_to_formatted(event_log)
     net, im, fm = pm4py.discover_petri_net_heuristics(formatted_event_log, activity_key="concept:name", case_id_key="case:concept:name", timestamp_key="time:timestamp")
@@ -157,21 +166,26 @@ def create_pm(request):
     try:
         with open(file_path, 'r') as file:
             pnml_data = file.read()
-            status = create_process_model(creator=user_id, create_time=current_timestamp, group=group_id, pm_name=shareflow_name, pm_content=pnml_data, session_id=session_id)
+            status = create_process_model(creator=user_id,
+                                          create_time=current_timestamp,
+                                          group=group_id,
+                                          pm_name=shareflow_name,
+                                          pm_content=pnml_data,
+                                          session_id=session_id)
             if not status:
-                print("Error occurred during the creation of process model.")
+                logger.error("Error occurred during the creation of process model.")
                 return {
                     "message": "Error occurred during the creation of process model.",
                     "created": False
                 }
     except FileNotFoundError:
-        print("File not found. Please check the file path.")
+        logger.error("File not found. Please check the file path.")
         return {
             "message": "File not found during creation of process model. Please retry!",
             "created": False
         }
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
         return {
             "message": f"An error occurred: {e}",
             "created": False
@@ -181,7 +195,7 @@ def create_pm(request):
     parameters = {"format": "png"}
     gviz = visualizer.apply(net, im, fm, parameters=parameters)
     visualizer.save(gviz, f"process_models/{sf_name}_{current_timestamp}.png")
-    print(f"PM {shareflow_name}_{session_id} created by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
+    logger.info(f"PM {shareflow_name}_{session_id} created by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
     return {
         "message": "Process model created",
         "created": True
@@ -220,8 +234,16 @@ def delete_pm(request):
         }
     if f"{shareflow_name}_{session_id}" in all_process_models:
         del all_process_models[f"{shareflow_name}_[SEP]_{session_id}"]
-    delete_process_model(session_id, user_id)
-    print(f"PM {shareflow_name}_{session_id} deleted by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
+    else:
+        logger.warning("Process model not found in session.", user_id, session_id)
+    status = delete_process_model_by_session_creator(session_id, user_id)
+    if not status:
+        logger.error("Error deleting process model from database", user_id, session_id)
+        return {
+            "message": "Error deleting process model from database",
+            "removed": False
+        }
+    logger.info(f"PM {shareflow_name}_{session_id} deleted by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
     return {
         "message": "Process model deleted",
         "removed": True
@@ -239,38 +261,32 @@ def task_classification(request):
     if "interval" in request.params:
         interval = request.params.get("interval")
         interval = int(interval)
-    print(datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
     if interval == 0:
-        print(user_id + ": Invalid interval")
+        logger.warning(user_id + ": Invalid interval")
         return {"task_name": "", "certainty": 0, "message": "", "interval": 5000}
     current_time = datetime.now()
     time_ago = current_time - timedelta(seconds=10)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
-    if len(trace) > 0:
-        pd.set_option('display.max_columns', None)
-        print(trace[["event_type", "text_content", "tag_name", "base_url"]])
     if trace is None or len(trace) <= 2:
-        print(user_id + ": Not enough trace found", len(trace))
+        logger.warning(user_id + ": Not enough trace found", len(trace))
         return invalid_result
     formatted_trace = convert_log_to_formatted(trace)
-    print(formatted_trace["concept:name"].tolist())
-    print(formatted_trace["time:timestamp"].tolist())
+    # print(formatted_trace["concept:name"].tolist())
+    # print(formatted_trace["time:timestamp"].tolist())
     match_scores = {}
     for k, v in all_process_models.items():
         net, im, fm = v
         replay_result = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm, activity_key="concept:name", case_id_key="case:concept:name", timestamp_key="time:timestamp")
-        print(replay_result)
         fitness = replay_result['average_trace_fitness']
         match_scores[k] = fitness
 
     match_scores = dict(sorted(match_scores.items(), key=lambda item: item[1], reverse=True))
-    print(match_scores)
     task = list(match_scores.keys())[0]
     match_score = match_scores[task]
     if match_score < 0.34:
-        print(user_id + ": No task matching")
+        logger.warning(user_id + ": No task matching")
         return invalid_result
     count = 0
     matched_tasks = []
@@ -279,6 +295,7 @@ def task_classification(request):
             count += 1
             matched_tasks.append(key.split("_[SEP]_")[0])
     if count > 1:
+        logger.info(f"Tasks identified for {user_id}: {'; '.join(match_scores)}")
         return {
             "task_name": "; ".join(matched_tasks),
             "certainty": match_score,
@@ -287,6 +304,7 @@ def task_classification(request):
         }
     # in the process model dictionary storing all PMs in the current session, the keys are <PM_name>_[SEP]_<session_id>
     # "_[SEP]_" is added as a separator, when displaying, it is important to exclude the session ID
+    logger.info(f"Task identified for {user_id}: {task.split('_[SEP]_')[0]}")
     return {
         'task_name': task.split("_[SEP]_")[0],
         "certainty": match_scores[task],
@@ -294,157 +312,6 @@ def task_classification(request):
         'interval': 7000
     }
 
-
-# @view_config(route_name="task_classification", request_method="GET", renderer="json")
-# def task_classification(request):
-#     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 10000}
-#     # get current time
-#     current_time = datetime.now()
-#     if "userid" not in request.params:
-#         return invalid_result
-#     user_id = request.params.get("userid")
-#     result = fetch_all_user_event(user_id, "timestamp")
-#     trace = pd.DataFrame(result["table_result"])
-#     if user_id not in push_status:
-#         push_status[user_id] = {"Adding Moodle Forum": None,
-#                                 "Embedding Moodle Media Resource": None,
-#                                 "Updating Moodle Information": None,
-#                                 "Updating Assessment Information": None,
-#                                 "Embedding Moodle Media Resource in Weekly Content": None,
-#                                 "Updating Unit Information": None,
-#                                 "Updating Consultation Information": None,
-#                                 "Updating Weekly Information": None}
-#     basic_info = current_time.strftime('%Y-%m-%d %H:%M:%S') + " " + user_id
-#     interval = 1000
-#     if "interval" in request.params:
-#         interval = request.params.get("interval")
-#         interval = int(interval)
-#
-#     if interval == 0:
-#         print(basic_info + ": Invalid interval")
-#         return invalid_result
-#
-#     time_delta_in_second = 10
-#
-#     if trace is None or len(trace) == 0:
-#         print(basic_info + ": No trace found")
-#         return invalid_result
-#
-#     target_events = ['START', 'beforeunload', 'click', 'close', 'keydown', 'onmouseover', 'open', 'scroll', 'select', 'server-record', 'submit']
-#     stop_words = set(stopwords.words('english'))
-#     # converting timestamp
-#     trace["timestamp"] = pd.to_datetime(trace["timestamp"], unit="ms")
-#     # get current time
-#     current_time = datetime.now()
-#     # Convert current time to a timestamp
-#     current_timestamp = current_time.timestamp()
-#     # get [time_delta_in_minute] ago
-#     ago = current_time - timedelta(seconds=time_delta_in_second)
-#     records = trace[(trace["timestamp"] >= ago) & (trace["timestamp"] <= current_time)]
-#     if records is None or len(records) == 0:
-#         print(basic_info + ": No records found")
-#         return invalid_result
-#     # records = trace.iloc[24:71] # for testing
-#     # get the attributes
-#     no_events = len(records)
-#     no_unique_events = len(records["event_type"].unique())
-#     no_unique_tags = len(records["tag_name"].unique())
-#     avg_time_between_operations = records["timestamp"].diff().dt.total_seconds().dropna()
-#     counts = records["event_type"].value_counts()
-#     dt = [no_events, no_unique_events, no_unique_tags]
-#     if len(avg_time_between_operations) == 0:
-#         dt += [0, 0]
-#     elif len(avg_time_between_operations) == 1:
-#         dt += [avg_time_between_operations.mean(), 0]
-#     else:
-#         dt += [avg_time_between_operations.mean(), avg_time_between_operations.std()]
-#     dt += [counts[val] if val in counts else 0 for val in target_events]
-#     if np.isnan(dt).any():
-#         print(basic_info + ": Invalid feature values")
-#         print(dt)
-#         return invalid_result
-#     data = [dt]
-#     # contextual features
-#     urls = records["base_url"].unique()
-#     main_urls = set()
-#     param = set()
-#     params = {} # hard code part
-#     for url in urls:
-#         if type(url) != str:
-#             continue
-#         if "?" in url:
-#             parts = url.split("?")
-#             if len(parts) != 2:
-#                 continue
-#             first, second = parts
-#             new_url = ''.join(char for char in first if char not in string.punctuation)
-#             main_urls.add(new_url)
-#             # Parse the URL string
-#             parsed_url = urllib.parse.urlparse(url)
-#             if "#" in url:
-#                 params.add(''.join(char for char in parsed_url.fragment if char not in string.punctuation))
-#             # Get the query parameters as a dictionary
-#             query_params = urllib.parse.parse_qs(parsed_url.query)
-#             for key, value in query_params.items():
-#                 param.add(''.join(char for char in f"{key}{value}" if char not in string.punctuation))
-#     context_info = ""
-#     # for i, r in records.iterrows():
-#     #     if r["tag_name"].upper() != "SUBMIT" and len(r["text_content"]) != 0:
-#     #         context_info += str(r["text_content"]) + " "
-#     # context_info = context_info.replace("\n", "").strip()
-#     # if len(context_info) == 0:
-#     #     context_info = ""
-#     for url in main_urls:
-#         context_info += url + " "
-#     for p in param:
-#         context_info += p + " "
-#
-#     tokens = word_tokenize(context_info)
-#     tokens = [t for t in tokens if t not in stop_words]
-#     updated_context_info = " ".join(tokens)
-#
-#     transformed_context_data = vectorizer.transform([updated_context_info])
-#
-#     combined_data = [data[0] + list(transformed_context_data[0].toarray()[0])]
-#
-#     pred = task_model_six.predict(combined_data)[0]
-#     prob = task_model_six.predict_proba(combined_data)[0]
-#
-#     if max(prob) <= 0.8:
-#         pred = task_model_three.predict(combined_data)[0]
-#         prob = task_model_three.predict_proba(combined_data)[0]
-#
-#     print(basic_info, ":", pred, max(prob))
-#     if max(prob) <= 0.8:
-#         return invalid_result
-#
-#     trace_message = ""
-#     expert_trace = fetch_all_events_by_task_name(pred)
-#     expert_trace = expert_trace["table_result"]
-#     if len(expert_trace) == 0:
-#         print(basic_info, ":", "Task identified but no expert trace available")
-#         return invalid_result
-#     else:
-#         trace_info = expert_trace[list(expert_trace.keys())[-1]]
-#         trace_message = expert_replay(trace_info)
-#
-#     if not push_status[user_id][pred]:
-#         push_status[user_id][pred] = datetime.now()
-#     else:
-#         time_diff = datetime.now() - push_status[user_id][pred]
-#         time_delta = timedelta(minutes=8)
-#         if time_diff < time_delta:
-#             print(basic_info, ":", "Task Identified within 8 Minutes")
-#             return invalid_result
-#         else:
-#             push_status[user_id][pred] = datetime.now()
-#     print("Push message successfully!", pred)
-#     return {
-#         "task_name": pred,
-#         "certainty": max(prob),
-#         "message": f"You are currently detected to be working on task <strong>{pred}</strong>{trace_message}",
-#         "interval": 60000
-#     }
 
 ### Methods from Ivan
 def expert_replay(trace):
