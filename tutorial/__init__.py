@@ -23,12 +23,14 @@ import io
 import logging
 from logging.handlers import RotatingFileHandler
 
-logger = logging.getLogger("MyLogger")
+logger = logging.getLogger("TAD")
 logger.setLevel(logging.INFO)
 handler = RotatingFileHandler("task_classification.log", maxBytes=1024000, backupCount=1000)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter.converter = time.localtime
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+logger.info("Service Started...")
 
 push_status = {}
 translation_table = str.maketrans(string.punctuation, '_'*len(string.punctuation))
@@ -295,7 +297,7 @@ def task_classification(request):
             count += 1
             matched_tasks.append(key.split("_[SEP]_")[0])
     if count > 1:
-        logger.info(f"Tasks identified for {user_id}: {'; '.join(match_scores)}")
+        logger.info(f"Tasks identified for {user_id}: {'; '.join(match_scores)} with score {match_score}")
         return {
             "task_name": "; ".join(matched_tasks),
             "certainty": match_score,
@@ -304,7 +306,7 @@ def task_classification(request):
         }
     # in the process model dictionary storing all PMs in the current session, the keys are <PM_name>_[SEP]_<session_id>
     # "_[SEP]_" is added as a separator, when displaying, it is important to exclude the session ID
-    logger.info(f"Task identified for {user_id}: {task.split('_[SEP]_')[0]}")
+    logger.info(f"Task identified for {user_id}: {task.split('_[SEP]_')[0]} with score {match_score}")
     return {
         'task_name': task.split("_[SEP]_")[0],
         "certainty": match_scores[task],
