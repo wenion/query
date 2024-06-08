@@ -195,7 +195,7 @@ def create_pm(request):
     parameters = {"format": "png"}
     gviz = visualizer.apply(net, im, fm, parameters=parameters)
     visualizer.save(gviz, f"process_models/{sf_name}_{current_timestamp}.png")
-    logger.info(f"PM {shareflow_name}_{session_id} created by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
+    logger.info(f"PM {shareflow_name}_{session_id} created by {user_id}")
     return {
         "message": "Process model created",
         "created": True
@@ -235,15 +235,15 @@ def delete_pm(request):
     if f"{shareflow_name}_{session_id}" in all_process_models:
         del all_process_models[f"{shareflow_name}_[SEP]_{session_id}"]
     else:
-        logger.warning("Process model not found in session.", user_id, session_id)
+        logger.warning(f"Process model not found in session, {user_id}, {session_id}")
     status = delete_process_model_by_session_creator(session_id, user_id)
     if not status:
-        logger.error("Error deleting process model from database", user_id, session_id)
+        logger.error(f"Error deleting process model from database, {user_id}, {session_id}")
         return {
             "message": "Error deleting process model from database",
             "removed": False
         }
-    logger.info(f"PM {shareflow_name}_{session_id} deleted by {user_id} at {datetime.now().strftime('%Y/%m/%d %H:%M:%S')}")
+    logger.info(f"PM {shareflow_name}_{session_id} deleted by {user_id}")
     return {
         "message": "Process model deleted",
         "removed": True
@@ -270,7 +270,7 @@ def task_classification(request):
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
     if trace is None or len(trace) <= 2:
-        logger.warning(user_id + ": Not enough trace found", len(trace))
+        logger.warning(f"{user_id}: Not enough trace found - {len(trace)}")
         return invalid_result
     formatted_trace = convert_log_to_formatted(trace)
     # print(formatted_trace["concept:name"].tolist())
