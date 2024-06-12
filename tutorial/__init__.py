@@ -65,14 +65,15 @@ def convert_log_to_formatted(event_log):
                 params = parse_qs(parsed_url.query)
                 new_params = "?"
                 for key, value in params.items():
-                    if key in ["id", "course", "update", "courseid"]:
-                        new_params += f"{key.translate(translation_table)}&"
-                    else:
-                        new_params += f"{key.translate(translation_table)}_{value[0].translate(translation_table)}&"
-                if parsed_url.fragment:
-                    fragment = parsed_url.fragment
-                    fragment = fragment.translate(translation_table)
-                    new_params += fragment
+                    new_params += f"{key.translate(translation_table)}"
+                    # if key in ["id", "course", "update", "courseid"]:
+                    #     new_params += f"{key.translate(translation_table)}&"
+                    # else:
+                    #     new_params += f"{key.translate(translation_table)}_{value[0].translate(translation_table)}&"
+                # if parsed_url.fragment:
+                #     fragment = parsed_url.fragment
+                #     fragment = fragment.translate(translation_table)
+                #     new_params += fragment
                 if new_params != "?":
                     if new_params[-1] == "&":
                         new_params = new_params[:-1]
