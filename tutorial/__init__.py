@@ -29,7 +29,7 @@ logger = logging.getLogger("TAD")
 logger.setLevel(logging.INFO)
 handler = RotatingFileHandler("task_classification.log", maxBytes=1024000, backupCount=1000)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logging.Formatter.converter = lambda *args: datetime.now(tz=pytz.timezone('AUstralia')).timetuple()
+logging.Formatter.converter = lambda *args: datetime.now(tz=pytz.timezone('Australia/Melbourne')).timetuple()
 #formatter.converter = time.localtime
 handler.setFormatter(formatter)
 logger.addHandler(handler)
