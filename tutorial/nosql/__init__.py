@@ -5,6 +5,7 @@ import pytz
 
 from redis_om import Migrator
 from redis_om import Field, JsonModel, EmbeddedJsonModel
+from urllib.parse import urlparse
 
 #from pydantic import NonNegativeInt
 from typing import Optional
@@ -18,8 +19,18 @@ __all__ = (
     "UserEvent",
     #"Rating",
     "UserFile",
-    "ProcessModel"
+    "ProcessModel",
+    "TaskPage"
 )
+
+
+class TaskPage(JsonModel):
+    class Meta:
+        global_key_prefix = "h"
+        model_key_prefix = "TaskPage"
+    url: str = Field(index=True)
+    pm_name: str = Field(index=True)
+    session_id: str = Field(index=True)
 
 
 class UserRole(EmbeddedJsonModel):
@@ -572,6 +583,60 @@ def delete_process_model(pk):
         ProcessModel.delete(pk)
     except:
         return False
+
+
+def fetch_all_task_pages():
+    query = TaskPage.find()
+    all_pages = query.all()
+    return all_pages if len(all_pages) > 0 else None
+
+
+def fetch_task_page_name_id(pm_name, session_id):
+    query = TaskPage.find((TaskPage.pm_name == pm_name) & (TaskPage.session_id == session_id))
+    total = query.all()
+    return total if len(total) > 0 else None
+
+
+def add_task_page(url, pm_name, session_id):
+    page = fetch_task_page_name_id(pm_name, session_id)
+    if page:
+        return page
+    page = TaskPage(url=url, pm_name=pm_name, session_id=session_id)
+    page.save()
+    return page
+
+
+def delete_task_page_name_id(pm_name, session_id):
+    try:
+        page = fetch_task_page_name_id(pm_name, session_id)
+        if page:
+            for p in page:
+                TaskPage.delete(p.pk)
+        else:
+            return False
+    except:
+        return False
+    else:
+        return True
+
+
+def delete_task_page(pk):
+    try:
+        TaskPage.delete(pk)
+    except:
+        return False
+
+
+def is_task_page(url):
+    parsed_url = urlparse(url)
+    if parsed_url:
+        domain = parsed_url.netloc
+        if domain:
+            query = TaskPage.find(url == domain)
+            match = query.all()
+            if len(match) > 0:
+                return True
+    return False
 
 
 def includeme(config):

@@ -4,6 +4,7 @@ from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
+from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -202,6 +203,17 @@ def create_pm(request):
     gviz = visualizer.apply(net, im, fm, parameters=parameters)
     visualizer.save(gviz, f"process_models/{sf_name}_{current_timestamp}.png")
     logger.info(f"PM {shareflow_name}_{session_id} created by {user_id}")
+    # store all task pages
+    all_urls = set(trace["base_url"].unique().tolist())
+    all_domains = set()
+    for url in all_urls:
+        parsed_url = urlparse(url)
+        if parsed_url:
+            domain = parsed_url.netloc
+            if domain:
+                all_domains.add(domain)
+    for domain in all_domains:
+        add_task_page(url=domain, pm_name=shareflow_name, session_id=session_id)
     return {
         "message": "Process model created",
         "created": True
@@ -249,6 +261,9 @@ def delete_pm(request):
             "message": "Error deleting process model from database",
             "removed": False
         }
+    deleted = delete_task_page_name_id(shareflow_name, session_id)
+    if not deleted:
+        logger.error(f"Error deleting task page info from database, {user_id}, {session_id}")
     logger.info(f"PM {shareflow_name}_{session_id} deleted by {user_id}")
     return {
         "message": "Process model deleted",
