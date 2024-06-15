@@ -22,35 +22,12 @@ from pm4py.visualization.petri_net import visualizer
 import io
 import logging
 from logging.handlers import RotatingFileHandler
-import pytz
-
-
-class TZFormatter(logging.Formatter):
-    def __init__(self, fmt=None, datefmt=None, tzname='UTC'):
-        super().__init__(fmt, datefmt)
-        self.tz = pytz.timezone(tzname)
-
-    def converter(self, timestamp):
-        dt = datetime.fromtimestamp(timestamp)
-        local_dt = self.tz.localize(dt)
-        return local_dt
-
-    def formatTime(self, record, datefmt=None):
-        dt = self.converter(record.created)
-        if datefmt:
-            s = dt.strftime(datefmt)
-        else:
-            try:
-                s = dt.isoformat(timespec='milliseconds')
-            except TypeError:
-                s = dt.isoformat()
-        return s
-
 
 logger = logging.getLogger("TAD")
 logger.setLevel(logging.INFO)
 handler = RotatingFileHandler("task_classification.log", maxBytes=1024000, backupCount=1000)
-formatter = TZFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', tzname="Australia/Sydney")
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter.converter = time.localtime
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.info("Service Started...")
