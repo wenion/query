@@ -250,7 +250,7 @@ def delete_pm(request):
             "message": "Invalid User ID or Session ID. Cannot delete process model",
             "removed": False
         }
-    if f"{shareflow_name}_{session_id}" in all_process_models:
+    if f"{shareflow_name}_[SEP]_{session_id}" in all_process_models:
         del all_process_models[f"{shareflow_name}_[SEP]_{session_id}"]
     else:
         logger.warning(f"Process model not found in session, {user_id}, {session_id}")
