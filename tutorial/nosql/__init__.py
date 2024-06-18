@@ -632,7 +632,7 @@ def is_task_page(url):
     if parsed_url:
         domain = parsed_url.netloc
         if domain:
-            query = TaskPage.find(url == domain)
+            query = TaskPage.find(TaskPage.url == domain)
             match = query.all()
             if len(match) > 0:
                 return True

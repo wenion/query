@@ -105,6 +105,7 @@ def convert_log_to_formatted(event_log):
     formatted_event_log = pm4py.format_dataframe(event_log, case_id="case_id", activity_key="activity", timestamp_key="time")
     return formatted_event_log
 
+
 def create_process_model_from_log(event_log):
     if event_log is None or event_log.empty:
         logger.warning("Empty or invalid event log")
@@ -113,13 +114,16 @@ def create_process_model_from_log(event_log):
     net, im, fm = pm4py.discover_petri_net_heuristics(formatted_event_log, activity_key="concept:name", case_id_key="case:concept:name", timestamp_key="time:timestamp")
     return net, im, fm
 
+
 @view_config(route_name='hello', request_method='GET', renderer='tutorial:templates/mytemplate.jinja2')
 def hello_world(request):
     return {'Hello': 'world'}
 
+
 @view_config(route_name='query', request_method='GET', renderer='json')
 def query(request):
     return {'Hello': 'query'}
+
 
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
 def create_pm(request):
@@ -219,6 +223,7 @@ def create_pm(request):
         "created": True
     }
 
+
 @view_config(route_name="delete_process_model", request_method="POST", renderer="json")
 def delete_pm(request):
     if not request.json_body:
@@ -269,6 +274,7 @@ def delete_pm(request):
         "message": "Process model deleted",
         "removed": True
     }
+
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
@@ -334,6 +340,47 @@ def task_classification(request):
     }
 
 
+@view_config(route_name="compare_against_pms", request_method="POST", renderer="json")
+def compare_against_pms(request):
+    if not request.json_body:
+        return {
+            "message": "Invalid data",
+            "result": None
+        }
+    if "user_id" not in request.json_body:
+        return {
+            "message": "User ID missing. Cannot compare.",
+            "result": None
+        }
+    if "session_id" not in request.json_body:
+        return {
+            "message": "Session ID missing. Cannot compare.",
+            "result": None
+        }
+    user_id = request.json_body["user_id"]
+    session_id = request.json_body["session_id"]
+    result = fetch_all_user_events_by_session(user_id, session_id)
+    if not result or not result["table_result"] or result["total"] == 0:
+        return {
+            "message": "Invalid User ID or Session ID. Cannot delete process model",
+            "result": None
+        }
+    trace = pd.DataFrame(result["table_result"])
+    formatted_trace = convert_log_to_formatted(trace)
+    match_scores = {}
+    for k, v in all_process_models.items():
+        net, im, fm = v
+        replay_result = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm,
+                                                                     activity_key="concept:name",
+                                                                     case_id_key="case:concept:name",
+                                                                     timestamp_key="time:timestamp")
+        fitness = replay_result['average_trace_fitness']
+        match_scores[k] = fitness
+    return {
+        "message": f"{user_id}'s session {session_id} successfully compared with all existing PMs",
+        "result": match_scores
+    }
+
 ### Methods from Ivan
 def expert_replay(trace):
     trace_message_list = []
@@ -392,12 +439,14 @@ def expert_replay(trace):
     trace_message = "<div style='max-height: 500px; overflow-y: auto; overflow-x: hidden; boarder: 1.5px solid grey'><ul><li>" + "</li><li>".join(trace_message_list) + "</li></ul></div>"
     return trace_message
 
+
 def get_keyboard(text_keydown, content):
     if content == "Backspace":
         return text_keydown[:-1]
     elif content == "Shift" or content == "Enter":
         return text_keydown
     return text_keydown + content
+
 
 def get_text_by_event(event_type, text_content, event_position):
     if len(text_content) > 20:
@@ -413,6 +462,7 @@ def get_text_by_event(event_type, text_content, event_position):
     else:
         return "No description"
 
+
 def get_position_viewport(port_x, port_y, offset_x, offset_y):
     # if port_y / 3 <= offset_y <= port_y * 2 / 3 and port_x / 3 <= offset_x <= port_x * 2 / 3:
     #     return "center"
@@ -427,6 +477,7 @@ def get_position_viewport(port_x, port_y, offset_x, offset_y):
     else:
         width = "right"
     return f"{height} {width}"
+
 
 def main(global_config, **settings):
     config = Configurator(settings=settings)
@@ -449,6 +500,7 @@ def main(global_config, **settings):
     config.add_route("create_process_model", "create_process_model")
     config.add_route("delete_process_model", "delete_process_model")
     config.add_route("task_classification", "task_classification")
+    config.add_route("compare_against_pms", "compare_against_pms")
     load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
     config.scan()
