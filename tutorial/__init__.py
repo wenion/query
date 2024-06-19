@@ -43,7 +43,8 @@ all_process_models = {}
 
 def load_all_process_models():
     process_models = fetch_all_process_model()
-    print(fetch_all_user_event_record())
+    #print(fetch_all_user_event_record())
+    print(fetch_user_event_record_by_session_id("selxjzvmvcKVLUk", "acct:zlswiecki@localhost"))
     if process_models:
         for pm in process_models:
             record = fetch_user_event_record_by_session_id(pm.session_id, pm.pm_name)
