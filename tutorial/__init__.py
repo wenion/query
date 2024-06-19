@@ -72,7 +72,7 @@ def convert_log_to_formatted(event_log):
             url = row["base_url"]
             prefix = "https://"
             if "https://" in url:
-                prefix, url = url.split("https://", 1)
+                _, url = url.split("https://", 1)
                 url, last_part = url.rsplit("/", 1)  # exclude the last part of the URL as it tends to mean nothing but being too specific
                 url = prefix + url
             if "?" in last_part:
