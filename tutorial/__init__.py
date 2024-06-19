@@ -69,18 +69,18 @@ def convert_log_to_formatted(event_log):
             text_content = " " + str(row["text_content"])
         url = ""
         if type(row["base_url"]) == str:
-            if "?" in row["base_url"]:
-                url, _ = row["base_url"].split("?")
-                prefix = ""
-                if "https://" in url:
-                    prefix, url = url.split("https://", 1)
-                url, _ = url.rsplit("/", 1) # exclude the last part of the URL as it tends to mean nothing but being too specific
+            url = row["base_url"]
+            prefix = ""
+            if "https://" in url:
+                prefix, url = url.split("https://", 1)
+                url, last_part = url.rsplit("/", 1)  # exclude the last part of the URL as it tends to mean nothing but being too specific
                 url = prefix + url
+            if "?" in last_part:
                 parsed_url = urlparse(row["base_url"])
                 params = parse_qs(parsed_url.query)
                 new_params = "?"
                 for key, value in params.items():
-                    new_params += f"{key.translate(translation_table)}"
+                    new_params += f"{key.translate(translation_table)}&"
                     # if key in ["id", "course", "update", "courseid"]:
                     #     new_params += f"{key.translate(translation_table)}&"
                     # else:
@@ -95,7 +95,7 @@ def convert_log_to_formatted(event_log):
                     url = url + new_params
                 url = " in " + url
             else:
-                url = " in " + row["base_url"]
+                url = " in " + url
         # previous_event = "N/A"
         # if index-1 >= 0 and event_log.at[index-1, "tag_name"]:
         #     previous_event = event_log.at[index-1, "tag_name"]
