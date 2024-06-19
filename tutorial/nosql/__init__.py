@@ -20,8 +20,27 @@ __all__ = (
     #"Rating",
     "UserFile",
     "ProcessModel",
-    "TaskPage"
+    "TaskPage",
+    "UserEventRecord"
 )
+
+
+class UserEventRecord(JsonModel):
+    class Meta:
+        global_key_prefix = 'h'
+        model_key_prefix = 'UserEventRecord'
+    startstamp: int = Field(index=True)
+    endstamp: int = Field(index=True)
+    session_id: str = Field(full_text_search=True, sortable=True)
+    task_name: Optional[str] = Field(full_text_search=True, sortable=True)
+    description: str = Field(full_text_search=True, sortable=True)
+    target_uri: str = Field(full_text_search=True, sortable=True)
+    start: int = Field(index=True)
+    completed: int = Field(index=True)
+    userid: str = Field(index=True)
+    groupid: str = Field(index=True)
+    shared: int = Field(index=True)
+    # steps: List[UserEvent] = Field(sortable=True)
 
 
 class TaskPage(JsonModel):
@@ -637,6 +656,15 @@ def is_task_page(url):
             if len(match) > 0:
                 return True
     return False
+
+
+def fetch_user_event_record_by_session_id(session_id, userid):
+    query = UserEventRecord.find(
+        (UserEventRecord.session_id == session_id) &
+        (UserEventRecord.userid == userid)
+        )
+    total = query.all()
+    return total[0] if len(total) > 0 else None
 
 
 def includeme(config):

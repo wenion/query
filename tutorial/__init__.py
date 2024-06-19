@@ -4,7 +4,7 @@ from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
-from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id
+from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -45,6 +45,11 @@ def load_all_process_models():
     process_models = fetch_all_process_model()
     if process_models:
         for pm in process_models:
+            if not fetch_user_event_record_by_session_id(pm.session_id, pm.pm_name):
+                # if Shareflow doesn't exist, delete the PM
+                delete_process_model(pm.pk)
+                print(f"{pm.pm_name} {pm.session_id} {pm.creator} DELETED UPON CHECKING")
+                continue
             pm_string = pm.pm_content
             net, im, fm = pnml_importer.deserialize(pm_string, parameters={"auto_guess_final_marking": False, "encoding": DEFAULT_ENCODING})
             all_process_models[f"{pm.pm_name}_[SEP]_{pm.session_id}"] = (net, im, fm)
