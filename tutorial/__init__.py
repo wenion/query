@@ -4,7 +4,7 @@ from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
-from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model
+from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -43,6 +43,7 @@ all_process_models = {}
 
 def load_all_process_models():
     process_models = fetch_all_process_model()
+    print(fetch_all_user_event_record())
     if process_models:
         for pm in process_models:
             record = fetch_user_event_record_by_session_id(pm.session_id, pm.pm_name)

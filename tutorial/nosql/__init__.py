@@ -658,6 +658,12 @@ def is_task_page(url):
     return False
 
 
+def fetch_all_user_event_record():
+    query = UserEventRecord.find()
+    total = query.all()
+    return total if len(total) > 0 else None
+
+
 def fetch_user_event_record_by_session_id(session_id, userid):
     query = UserEventRecord.find(
         (UserEventRecord.session_id == session_id) &
