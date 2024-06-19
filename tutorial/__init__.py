@@ -47,7 +47,7 @@ def load_all_process_models():
     print(fetch_user_event_record_by_session_id("selxjzvmvcKVLUk", "acct:zlswiecki@localhost"))
     if process_models:
         for pm in process_models:
-            record = fetch_user_event_record_by_session_id(pm.session_id, pm.pm_name)
+            record = fetch_user_event_record_by_session_id(session_id=pm.session_id, userid=pm.pm_name)
             print(record)
             if not record:
                 # if Shareflow doesn't exist, delete the PM
