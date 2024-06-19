@@ -664,11 +664,17 @@ def fetch_all_user_event_record():
     return total if len(total) > 0 else None
 
 
-def fetch_user_event_record_by_session_id(session_id, userid):
+def fetch_user_event_record_by_session_user(session_id, userid):
     query = UserEventRecord.find(
         (UserEventRecord.session_id == session_id) &
         (UserEventRecord.userid == userid)
         )
+    total = query.all()
+    return total[0] if len(total) > 0 else None
+
+
+def fetch_user_event_record_by_session_id(session_id):
+    query = UserEventRecord.find(UserEventRecord.session_id == session_id)
     total = query.all()
     return total[0] if len(total) > 0 else None
 

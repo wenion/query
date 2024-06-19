@@ -4,7 +4,7 @@ from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
-from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record
+from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_user, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session_id
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -45,7 +45,7 @@ def load_all_process_models():
     process_models = fetch_all_process_model()
     if process_models:
         for pm in process_models:
-            record = fetch_user_event_record_by_session_id(session_id=pm.session_id, userid=pm.creator)
+            record = fetch_user_event_record_by_session_user(session_id=pm.session_id, userid=pm.creator)
             if not record:
                 # if Shareflow doesn't exist, delete the PM
                 delete_process_model(pm.pk)
@@ -289,7 +289,7 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 7000}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 7000, "task_ids": []}
     # get current time
     current_time = datetime.now()
     if "userid" not in request.params:
@@ -301,7 +301,7 @@ def task_classification(request):
         interval = int(interval)
     if interval == 0:
         logger.warning(user_id + ": Invalid interval")
-        return {"task_name": "", "certainty": 0, "message": "", "interval": 5000}
+        return {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": []}
     current_time = datetime.now()
     time_ago = current_time - timedelta(seconds=10)
     time_ago = int(time_ago.timestamp() * 1000)
@@ -323,31 +323,55 @@ def task_classification(request):
     match_scores = dict(sorted(match_scores.items(), key=lambda item: item[1], reverse=True))
     task = list(match_scores.keys())[0]
     match_score = match_scores[task]
+    # not pushing if all match scores below threshold
     if match_score < 0.34:
         logger.warning(user_id + ": No task matching")
         return invalid_result
+
+    # in the process model dictionary storing all PMs in the current session, the keys are <PM_name>_[SEP]_<session_id>
+    # "_[SEP]_" is added as a separator, when displaying, it is important to exclude the session ID
     count = 0
     matched_tasks = []
+    tids = []
     for key, value in match_scores.items():
         if value == match_score:
             count += 1
-            matched_tasks.append(key.split("_[SEP]_")[0])
-    if count > 1:
-        logger.info(f"Tasks identified for {user_id}: {'; '.join(match_scores)} with score {match_score}")
-        return {
-            "task_name": "; ".join(matched_tasks),
-            "certainty": match_score,
-            "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
-            "interval": 7000
-        }
-    # in the process model dictionary storing all PMs in the current session, the keys are <PM_name>_[SEP]_<session_id>
-    # "_[SEP]_" is added as a separator, when displaying, it is important to exclude the session ID
-    logger.info(f"Task identified for {user_id}: {task.split('_[SEP]_')[0]} with score {match_score}")
+            t_name, t_id = key.split("_[SEP]_")
+            matched_tasks.append(t_name)
+            shareflow = fetch_user_event_record_by_session_id(t_id)
+            if shareflow:
+                tids.append(shareflow.pk)
+    # if match_score > 0.9:
+    # # same highest scores; TODO: should we show all when we have multiple same highest > 0.9?
+    #     logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
+    #     return {
+    #         "task_name": "; ".join(matched_tasks),
+    #         "certainty": match_score,
+    #         "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
+    #         "interval": 7000,
+    #         "task_ids": tids
+    #     }
+    if match_score <= 0.9:
+        # if match score <= 0.9, get top n (max 3) whose score <= 0.9 but >= 0.34
+        matched_tasks = []
+        tids = []
+        count = 0
+        for key, value in match_scores.items():
+            if count == 3 or value < 0.34:
+                break
+            t_name, t_id = key.split("_[SEP]_")
+            matched_tasks.append(t_name)
+            shareflow = fetch_user_event_record_by_session_id(t_id)
+            if shareflow:
+                tids.append(shareflow.pk)
+            count += 1
+    logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
     return {
-        'task_name': task.split("_[SEP]_")[0],
-        "certainty": match_scores[task],
-        'message': task.split("_[SEP]_")[0],
-        'interval': 7000
+        "task_name": "; ".join(matched_tasks),
+        "certainty": match_score,
+        "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
+        "interval": 7000,
+        "task_ids": tids
     }
 
 
