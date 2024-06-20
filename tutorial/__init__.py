@@ -71,6 +71,8 @@ def convert_log_to_formatted(event_log):
         url = ""
         if type(row["base_url"]) == str:
             url = row["base_url"]
+            if "#" in url:
+                url, _ = url.split("#") # remove the fragment
             prefix = "https://"
             if "https://" in url:
                 _, url = url.split("https://", 1)
