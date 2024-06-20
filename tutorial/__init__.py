@@ -4,7 +4,7 @@ from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
-from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_user, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session_id
+from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -24,6 +24,7 @@ import io
 import logging
 from logging.handlers import RotatingFileHandler
 import pytz
+import random
 
 
 logger = logging.getLogger("TAD")
@@ -45,7 +46,7 @@ def load_all_process_models():
     process_models = fetch_all_process_model()
     if process_models:
         for pm in process_models:
-            record = fetch_user_event_record_by_session_user(session_id=pm.session_id, userid=pm.creator)
+            record = fetch_user_event_record_by_session_id(session_id=pm.session_id, userid=pm.creator)
             if not record:
                 # if Shareflow doesn't exist, delete the PM
                 delete_process_model(pm.pk)
@@ -70,6 +71,8 @@ def convert_log_to_formatted(event_log):
         url = ""
         if type(row["base_url"]) == str:
             url = row["base_url"]
+            if "#" in url:
+                url, _ = url.split("#") # remove the fragment
             prefix = "https://"
             if "https://" in url:
                 _, url = url.split("https://", 1)
@@ -289,7 +292,7 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 7000, "task_ids": []}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": []}
     # get current time
     current_time = datetime.now()
     if "userid" not in request.params:
@@ -301,7 +304,7 @@ def task_classification(request):
         interval = int(interval)
     if interval == 0:
         logger.warning(user_id + ": Invalid interval")
-        return {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": []}
+        return invalid_result
     current_time = datetime.now()
     time_ago = current_time - timedelta(seconds=10)
     time_ago = int(time_ago.timestamp() * 1000)
@@ -338,7 +341,7 @@ def task_classification(request):
             count += 1
             t_name, t_id = key.split("_[SEP]_")
             matched_tasks.append(t_name)
-            shareflow = fetch_user_event_record_by_session_id(t_id)
+            shareflow = fetch_user_event_record_by_session(t_id)
             if shareflow:
                 tids.append(shareflow.pk)
     # if match_score > 0.9:
@@ -361,17 +364,29 @@ def task_classification(request):
                 break
             t_name, t_id = key.split("_[SEP]_")
             matched_tasks.append(t_name)
-            shareflow = fetch_user_event_record_by_session_id(t_id)
+            shareflow = fetch_user_event_record_by_session(t_id)
             if shareflow:
                 tids.append(shareflow.pk)
             count += 1
-    logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
+
+    # logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
+    # return {
+    #     "task_name": "; ".join(matched_tasks),
+    #     "certainty": match_score,
+    #     "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
+    #     "interval": 7000,
+    #     "task_ids": tids
+    # }
+
+    # randomly select one highest Shareflow if there are multiple matching
+    matched_task_idx = random.choice(list(range(len(matched_tasks))))
+    logger.info(f"Tasks identified for {user_id}: {matched_tasks[matched_task_idx]} with score {match_score}")
     return {
-        "task_name": "; ".join(matched_tasks),
+        "task_name": matched_tasks[matched_task_idx],
         "certainty": match_score,
-        "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
+        "message": "The following tasks may be relevant: " + matched_tasks[matched_task_idx],
         "interval": 7000,
-        "task_ids": tids
+        "task_ids": tids[matched_task_idx]
     }
 
 
