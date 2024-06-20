@@ -25,6 +25,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import pytz
 import random
+import csv
 
 
 logger = logging.getLogger("TAD")
@@ -431,103 +432,43 @@ def compare_against_pms(request):
         "result": match_scores
     }
 
-### Methods from Ivan
-def expert_replay(trace):
-    trace_message_list = []
-    flag_scroll = False  # is it continuous scrolling event?
-    flag_input = False  # is it continuous inputting event?
-    text_key_down = ""
-    pre_url = None
-    for event in trace:
-        cur_event = str(event["event_type"])
-        if not pre_url:
-            pre_url = str(event["base_url"])
-        elif pre_url != str(event["base_url"]):
-            if flag_input:
-                flag_input = False  # user finishes inputting
-                event_description = get_text_by_event("keydown", text_key_down, "")
-                trace_message_list.append(f"{event_description}<br><small>url: <a href='{pre_url}'>{pre_url}</a><br>position: N/A</small>")
-                text_key_down = ""
-            if flag_scroll:
-                flag_scroll = False
-            #trace_message_list.append(f"Navigate to {event['base_url']}")
-            pre_url = str(event["base_url"])
-        else:
-            pre_url = str(event["base_url"])
+@view_config(route_name='get_trace_for_session', renderer='string')
+def get_trace_for_session(request):
+    if not request.json_body:
+        return {
+            "message": "Invalid data",
+            "result": None
+        }
+    if "user_id" not in request.json_body:
+        return {
+            "message": "User ID missing. Cannot produce trace.",
+            "result": None
+        }
+    if "session_id" not in request.json_body:
+        return {
+            "message": "Session ID missing. Cannot produce trace.",
+            "result": None
+        }
+    user_id = request.json_body["user_id"]
+    session_id = request.json_body["session_id"]
+    query_response = fetch_user_event_record_by_session(user_id, session_id)
+    if query_response["total"] == 0:
+        return {
+            "message": "No trace found",
+            "result": None
+        }
+    df = pd.DataFrame(query_response["table_result"])
+    # Prepare your CSV data
+    csv_output = io.StringIO()
+    df.to_csv(csv_output, index=False)
+    csv_output.seek(0)
+    csv_content = csv_output.getvalue()
 
-        if cur_event not in ["OPEN", "visibilitychange", "beforeunload", "open", "server-record", "submit", "START", "close"]:
-            if cur_event == "scroll":
-                if flag_input:
-                    flag_input = False  # user finishes inputting
-                    event_description = get_text_by_event("keydown", text_key_down, "")
-                    trace_message_list.append(f"{event_description}<br><small>url: <a href='{pre_url}'>{pre_url}</a><br>position: N/A</small>")
-                    text_key_down = ""
-
-                if not flag_scroll:
-                    flag_scroll = True  # user is currently scrolling
-                    event_description = get_text_by_event(cur_event, str(event["text_content"]).split(":")[0], "")
-                    trace_message_list.append(f"{event_description}<br><small>url: <a href='{pre_url}'>{pre_url}</a><br>position: N/A</small>")
-
-            elif cur_event == "keydown":
-                text_key_down = get_keyboard(text_key_down, str(event["text_content"]))
-                if not flag_input:
-                    flag_input = True
-                if flag_scroll:
-                    flag_scroll = False
-            else:
-                if str(event["text_content"]) != "" and str(event["tag_name"]) != "SIDEBAR-TAB":
-                    width = 0 if event["width"] == None else event["width"]
-                    height = 0 if event["height"] == None else event["height"]
-                    event_position = get_position_viewport(int(width), int(height), int(event["offset_x"]), int(event["offset_y"]))
-                    event_description = get_text_by_event(cur_event, str(event["text_content"]), event_position)
-                    if event_description != "No description":
-                        trace_message_list.append(f"{event_description}<br><small>url: <a href='{pre_url}'>{pre_url}</a><br>position: {event_position}</small>")
-    if len(text_key_down) != 0:
-        event_description = get_text_by_event("keydown", text_key_down, "")
-        trace_message_list.append(f"{event_description}<small>[{pre_url}]</small>")
-
-    trace_message = "<div style='max-height: 500px; overflow-y: auto; overflow-x: hidden; boarder: 1.5px solid grey'><ul><li>" + "</li><li>".join(trace_message_list) + "</li></ul></div>"
-    return trace_message
-
-
-def get_keyboard(text_keydown, content):
-    if content == "Backspace":
-        return text_keydown[:-1]
-    elif content == "Shift" or content == "Enter":
-        return text_keydown
-    return text_keydown + content
-
-
-def get_text_by_event(event_type, text_content, event_position):
-    if len(text_content) > 20:
-        text_content = text_content[0:20] + "..."
-    if event_type == "click":
-        return 'Click on "' + text_content.replace("  ", " ").replace("\n", " ") + '" at ' + event_position
-    elif event_type == "scroll":
-        return text_content.lower().capitalize() + " on the web page"
-    elif event_type == "select":
-        return 'Select  "' + text_content + '" at ' + event_position
-    elif event_type == "keydown":
-        return 'Type "' + text_content + '"'
-    else:
-        return "No description"
-
-
-def get_position_viewport(port_x, port_y, offset_x, offset_y):
-    # if port_y / 3 <= offset_y <= port_y * 2 / 3 and port_x / 3 <= offset_x <= port_x * 2 / 3:
-    #     return "center"
-    height = ""
-    width = ""
-    if port_y/2 > offset_y:
-        height = "top"
-    else:
-        height = "bottom"
-    if port_x/2 > offset_x:
-        width = "left"
-    else:
-        width = "right"
-    return f"{height} {width}"
-
+    # Create response
+    response = Response(content_type='text/csv')
+    response.content_disposition = 'attachment; filename="data.csv"'
+    response.body = csv_content.encode('utf-8')
+    return response
 
 def main(global_config, **settings):
     config = Configurator(settings=settings)
@@ -551,6 +492,7 @@ def main(global_config, **settings):
     config.add_route("delete_process_model", "delete_process_model")
     config.add_route("task_classification", "task_classification")
     config.add_route("compare_against_pms", "compare_against_pms")
+    config.add_route("get_trace_for_session", "get_trace_for_session")
     load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
     config.scan()
