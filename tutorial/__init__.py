@@ -451,7 +451,7 @@ def get_trace_for_session(request):
         }
     user_id = request.json_body["user_id"]
     session_id = request.json_body["session_id"]
-    query_response = fetch_user_event_record_by_session(user_id, session_id)
+    query_response = fetch_all_user_events_by_session(user_id, session_id)
     if query_response["total"] == 0:
         return {
             "message": "No trace found",
