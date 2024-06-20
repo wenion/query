@@ -4,7 +4,7 @@ from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
-from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_user, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session_id
+from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -46,7 +46,7 @@ def load_all_process_models():
     process_models = fetch_all_process_model()
     if process_models:
         for pm in process_models:
-            record = fetch_user_event_record_by_session_user(session_id=pm.session_id, userid=pm.creator)
+            record = fetch_user_event_record_by_session_id(session_id=pm.session_id, userid=pm.creator)
             if not record:
                 # if Shareflow doesn't exist, delete the PM
                 delete_process_model(pm.pk)
@@ -339,7 +339,7 @@ def task_classification(request):
             count += 1
             t_name, t_id = key.split("_[SEP]_")
             matched_tasks.append(t_name)
-            shareflow = fetch_user_event_record_by_session_id(t_id)
+            shareflow = fetch_user_event_record_by_session(t_id)
             if shareflow:
                 tids.append(shareflow.pk)
     # if match_score > 0.9:
@@ -362,7 +362,7 @@ def task_classification(request):
                 break
             t_name, t_id = key.split("_[SEP]_")
             matched_tasks.append(t_name)
-            shareflow = fetch_user_event_record_by_session_id(t_id)
+            shareflow = fetch_user_event_record_by_session(t_id)
             if shareflow:
                 tids.append(shareflow.pk)
             count += 1
