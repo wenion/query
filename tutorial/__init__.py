@@ -24,6 +24,7 @@ import io
 import logging
 from logging.handlers import RotatingFileHandler
 import pytz
+import random
 
 
 logger = logging.getLogger("TAD")
@@ -289,7 +290,7 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 7000, "task_ids": []}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": []}
     # get current time
     current_time = datetime.now()
     if "userid" not in request.params:
@@ -301,7 +302,7 @@ def task_classification(request):
         interval = int(interval)
     if interval == 0:
         logger.warning(user_id + ": Invalid interval")
-        return {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": []}
+        return invalid_result
     current_time = datetime.now()
     time_ago = current_time - timedelta(seconds=10)
     time_ago = int(time_ago.timestamp() * 1000)
@@ -365,13 +366,25 @@ def task_classification(request):
             if shareflow:
                 tids.append(shareflow.pk)
             count += 1
-    logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
+
+    # logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
+    # return {
+    #     "task_name": "; ".join(matched_tasks),
+    #     "certainty": match_score,
+    #     "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
+    #     "interval": 7000,
+    #     "task_ids": tids
+    # }
+
+    # randomly select one highest Shareflow if there are multiple matching
+    matched_task_idx = random.choice(list(range(len(matched_tasks))))
+    logger.info(f"Tasks identified for {user_id}: {matched_tasks[matched_task_idx]} with score {match_score}")
     return {
-        "task_name": "; ".join(matched_tasks),
+        "task_name": matched_tasks[matched_task_idx],
         "certainty": match_score,
-        "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
+        "message": "The following tasks may be relevant: " + matched_tasks[matched_task_idx],
         "interval": 7000,
-        "task_ids": tids
+        "task_ids": tids[matched_task_idx]
     }
 
 
