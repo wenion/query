@@ -11,6 +11,10 @@ from urllib.parse import urlparse
 from typing import Optional
 
 #from h.models_redis.rating import Rating
+from tutorial.nosql.process_model import ProcessModel, fetch_all_process_model, fetch_process_model_by_session_creator, get_process_model, create_process_model, update_process_model, delete_process_model, delete_process_model_by_session_creator
+from tutorial.nosql.task_page import TaskPage, fetch_all_task_pages, fetch_task_page_name_id, add_task_page, delete_task_page, delete_task_page_name_id, is_task_page
+from tutorial.nosql.user_event_record import UserEventRecord, fetch_all_user_event_record, fetch_user_event_record_by_session_id, fetch_user_event_record_by_session
+
 
 __all__ = (
     "UserRole",
@@ -20,36 +24,25 @@ __all__ = (
     #"Rating",
     "UserFile",
     "ProcessModel",
+    "fetch_all_process_model",
+    "fetch_process_model_by_session_creator",
+    "get_process_model",
+    "create_process_model",
+    "update_process_model",
+    "delete_process_model_by_session_creator",
+    "delete_process_model",
     "TaskPage",
-    "UserEventRecord"
+    "fetch_all_task_pages",
+    "fetch_task_page_name_id",
+    "add_task_page",
+    "delete_task_page_name_id",
+    "delete_task_page",
+    "is_task_page",
+    "UserEventRecord",
+    "fetch_all_user_event_record",
+    "fetch_user_event_record_by_session",
+    "fetch_user_event_record_by_session_id"
 )
-
-
-class UserEventRecord(JsonModel):
-    class Meta:
-        global_key_prefix = 'h'
-        model_key_prefix = 'UserEventRecord'
-    startstamp: int = Field(index=True)
-    endstamp: int = Field(index=True)
-    session_id: str = Field(full_text_search=True, sortable=True)
-    task_name: Optional[str] = Field(full_text_search=True, sortable=True)
-    description: str = Field(full_text_search=True, sortable=True)
-    target_uri: str = Field(full_text_search=True, sortable=True)
-    start: int = Field(index=True)
-    completed: int = Field(index=True)
-    userid: str = Field(index=True)
-    groupid: str = Field(index=True)
-    shared: int = Field(index=True)
-    # steps: List[UserEvent] = Field(sortable=True)
-
-
-class TaskPage(JsonModel):
-    class Meta:
-        global_key_prefix = "h"
-        model_key_prefix = "TaskPage"
-    url: str = Field(index=True)
-    pm_name: str = Field(index=True)
-    session_id: str = Field(index=True)
 
 
 class UserRole(EmbeddedJsonModel):
@@ -64,18 +57,6 @@ class UserRole(EmbeddedJsonModel):
     joined_year: int = Field(index=True)
     years_of_experience: int = Field(index=True)
     expert: int = Field(index=True)
-
-
-class ProcessModel(JsonModel):
-    class Meta:
-        global_key_prefix = 'h'
-        model_key_prefix = 'ProcessModel'
-    creator: str = Field(index=True) #userid in UserRole
-    create_time: int = Field(index=True) # the time process model is created
-    group: str = Field(index=True) #the permitted groups for the ShareFlow public_id
-    pm_name: str = Field(index=True)#process model name
-    pm_content: str = Field(index=True)# process model content
-    session_id: str = Field(index=True)
 
 
 class Result(JsonModel):
@@ -528,155 +509,6 @@ def save_in_redis(event):
             return {"succ": str(event) + "has been saved"}
     else:
         return {"error": str(event)}
-
-
-def fetch_all_process_model():
-    query = ProcessModel.find()
-    all_models = query.all()
-    return all_models if len(all_models) > 0 else None
-
-
-def fetch_process_model_by_session_creator(session_id, creator):
-    query = ProcessModel.find((ProcessModel.session_id == session_id) & (ProcessModel.creator == creator))
-    total = query.all()
-    return total[0] if len(total) > 0 else None
-
-
-def get_process_model(pk):
-    process_model = ProcessModel.get(pk)
-    process_model_dict = process_model.dict()
-    return process_model_dict
-
-
-def create_process_model(
-        creator,
-        create_time,
-        group,
-        pm_name,
-        pm_content,
-        session_id):
-    exist = fetch_process_model_by_session_creator(session_id, creator)
-    if exist:
-        return exist
-    process_model = ProcessModel(
-        creator = creator,
-        create_time = create_time,
-        group = group,
-        pm_name = pm_name,
-        pm_content = pm_content,
-        session_id = session_id
-    )
-    process_model.save()
-    return process_model
-
-
-def update_process_model(session_id, creator, update):
-    process_model = fetch_process_model_by_session_creator(session_id=session_id, creator=creator)
-    if process_model:
-        # process_model.creator = update.get('creator')
-        # process_model.group = update.get('group')
-        # process_model.pm_name = update.get('pm_name')
-        process_model.pm_content = update.get('pm_content')
-
-        process_model.save()
-        return process_model
-    else:
-        return None
-
-
-def delete_process_model_by_session_creator(session_id, creator):
-    try:
-        pm = fetch_process_model_by_session_creator(session_id, creator)
-        if pm:
-            ProcessModel.delete(pm.pk)
-        else:
-            return False
-    except:
-        return False
-    else:
-        return True
-
-
-def delete_process_model(pk):
-    try:
-        ProcessModel.delete(pk)
-    except:
-        return False
-
-
-def fetch_all_task_pages():
-    query = TaskPage.find()
-    all_pages = query.all()
-    return all_pages if len(all_pages) > 0 else None
-
-
-def fetch_task_page_name_id(pm_name, session_id):
-    query = TaskPage.find((TaskPage.pm_name == pm_name) & (TaskPage.session_id == session_id))
-    total = query.all()
-    return total if len(total) > 0 else None
-
-
-def add_task_page(url, pm_name, session_id):
-    page = fetch_task_page_name_id(pm_name, session_id)
-    if page:
-        return page
-    page = TaskPage(url=url, pm_name=pm_name, session_id=session_id)
-    page.save()
-    return page
-
-
-def delete_task_page_name_id(pm_name, session_id):
-    try:
-        page = fetch_task_page_name_id(pm_name, session_id)
-        if page:
-            for p in page:
-                TaskPage.delete(p.pk)
-        else:
-            return False
-    except:
-        return False
-    else:
-        return True
-
-
-def delete_task_page(pk):
-    try:
-        TaskPage.delete(pk)
-    except:
-        return False
-
-
-def is_task_page(url):
-    parsed_url = urlparse(url)
-    if parsed_url:
-        domain = parsed_url.netloc
-        if domain:
-            query = TaskPage.find(TaskPage.url == domain)
-            match = query.all()
-            if len(match) > 0:
-                return True
-    return False
-
-
-def fetch_all_user_event_record():
-    query = UserEventRecord.find()
-    total = query.all()
-    return total if len(total) > 0 else None
-
-
-def fetch_user_event_record_by_session_id(session_id, userid):
-    query = UserEventRecord.find(
-        (UserEventRecord.session_id == session_id) &
-        (UserEventRecord.userid == userid)
-        )
-    total = query.all()
-    return total[0] if len(total) > 0 else None
-
-
-def fetch_user_event_record_by_session(session_id):
-    query = UserEventRecord.find(UserEventRecord.session_id == session_id)
-    total = query.all()
-    return total[0] if len(total) > 0 else None
 
 
 def includeme(config):
