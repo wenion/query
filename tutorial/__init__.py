@@ -481,7 +481,7 @@ def view_all_task_pages(request):
         task_pages.append(json_item)
     return task_pages
 
-def main(global_config, **settings):ß
+def main(global_config, **settings):
     config = Configurator(settings=settings)
     # config.registry["args"] = args
     # config.registry["tokenizer"] = tokenizer
@@ -504,6 +504,7 @@ def main(global_config, **settings):ß
     config.add_route("task_classification", "task_classification")
     config.add_route("compare_against_pms", "compare_against_pms")
     config.add_route("get_trace_for_session", "get_trace_for_session")
+    config.add_route("view_all_task_pages", "view_all_task_pages")
     load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
     config.scan()
