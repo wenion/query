@@ -155,6 +155,8 @@ def add(request):
                          push_to="acct:Steve_Li@localhost",
                          push_content="You are detected to be working on Adding a Forum in Moodle",
                          additional_info=(("selxbww2kkBRtqx", 0.93), ("selx4j17pcGiIJQ", 0.93)))
+    redis = get_redis_connection()
+    redis.expire(pr.pk, 20)
     return {'pk': pr.pk}
 
 
