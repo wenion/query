@@ -537,6 +537,7 @@ def main(global_config, **settings):
 
     config.add_route('query', 'query')
     config.add_route('add', 'add')
+    config.add_route("delete", "delete")
     config.add_route('hello', '/')
     config.add_route("create_process_model", "create_process_model")
     config.add_route("delete_process_model", "delete_process_model")
