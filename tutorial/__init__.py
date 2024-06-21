@@ -4,7 +4,7 @@ from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
-from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session
+from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session, fetch_all_task_pages
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -475,13 +475,13 @@ def get_trace_for_session(request):
 @view_config(route_name="view_all_task_pages", request_method="POST", renderer="json")
 def view_all_task_pages(request):
     task_pages = []
-    query_result =
+    query_result = fetch_all_task_pages()
     for index, item in enumerate(query_result):
         json_item = {"id": index, **item}
         task_pages.append(json_item)
     return task_pages
 
-def main(global_config, **settings):
+def main(global_config, **settings):ß
     config = Configurator(settings=settings)
     # config.registry["args"] = args
     # config.registry["tokenizer"] = tokenizer
