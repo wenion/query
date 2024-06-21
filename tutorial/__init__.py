@@ -163,10 +163,20 @@ def add(request):
 @view_config(route_name='query', request_method='GET', renderer='json')
 def query(request):
     if "pk" not in request.params:
-        return {"result": None}
+        return {"result": False}
     pk = request.params.get("pk")
     result = fetch_push_record(pk)
-    return {'result': result}
+    if result:
+        return {"result": True}
+    return {'result': False}
+
+
+@view_config(route_name='delete', request_method='GET', renderer='json')
+def delete(request):
+    if "pk" not in request.params:
+        return {"result": False}
+    outcome = delete_push_record(request.params.get("pk"))
+    return {'result': outcome}
 
 
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
