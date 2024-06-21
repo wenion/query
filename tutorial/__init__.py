@@ -5,6 +5,7 @@ from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
 from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session, fetch_all_task_pages
+from tutorial.nosql import add_push_record, delete_push_record, fetch_push_record
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -25,7 +26,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import pytz
 import random
-import csv
+from redis_om import get_redis_connection
 
 
 logger = logging.getLogger("TAD")
@@ -79,13 +80,17 @@ def convert_log_to_formatted(event_log):
             prefix = "https://"
             if "https://" in url:
                 _, url = url.split("https://", 1)
-                url, last_part = url.rsplit("/", 1)  # exclude the last part of the URL as it tends to mean nothing but being too specific
-                last_parts.append(last_part)
+                edited = False
+                # remove the last parts that likely are too context specific
+                for part in last_parts:
+                    if part in url:
+                        url = url.replace(part, "")
+                        edited = True
+                if not edited:
+                    url, last_part = url.rsplit("/", 1)  # exclude the last part of the URL as it tends to mean nothing but being too specific
+                    last_parts.append(last_part)
                 url = prefix + url
-            # remove the last parts that likely are too context specific
-            for part in last_parts:
-                if part in url:
-                    url = url.replace(part, "")
+
 
             if "?" in last_part:
                 parsed_url = urlparse(row["base_url"])
@@ -143,9 +148,23 @@ def hello_world(request):
     return {'Hello': 'world'}
 
 
+@view_config(route_name='add', request_method='GET', renderer='json')
+def add(request):
+    pr = add_push_record(timestamp=datetime.now().timestamp(),
+                         push_type="ShareFlow",
+                         push_to="acct:Steve_Li@localhost",
+                         push_content="You are detected to be working on Adding a Forum in Moodle",
+                         additional_info=(("selxbww2kkBRtqx", 0.93), ("selx4j17pcGiIJQ", 0.93)))
+    return {'pk': pr.pk}
+
+
 @view_config(route_name='query', request_method='GET', renderer='json')
 def query(request):
-    return {'Hello': 'query'}
+    if "pk" not in request.params:
+        return {"result": None}
+    pk = request.params.get("pk")
+    result = fetch_push_record(pk)
+    return {'result': result}
 
 
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
@@ -505,7 +524,7 @@ def main(global_config, **settings):
     print(fetch_user_event(userid, 0, 1, "timestamp"))
 
     config.add_route('query', 'query')
-    config.add_route('search', 'search')
+    config.add_route('add', 'add')
     config.add_route('hello', '/')
     config.add_route("create_process_model", "create_process_model")
     config.add_route("delete_process_model", "delete_process_model")
