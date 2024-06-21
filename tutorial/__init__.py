@@ -432,7 +432,8 @@ def compare_against_pms(request):
         "result": match_scores
     }
 
-@view_config(route_name='get_trace_for_session', renderer='string')
+
+@view_config(route_name='get_trace_for_session', request_method="POST", renderer='string')
 def get_trace_for_session(request):
     if not request.json_body:
         return {
@@ -469,6 +470,16 @@ def get_trace_for_session(request):
     response.content_disposition = 'attachment; filename="data.csv"'
     response.body = csv_content.encode('utf-8')
     return response
+
+
+@view_config(route_name="view_all_task_pages", request_method="POST", renderer="json")
+def view_all_task_pages(request):
+    task_pages = []
+    query_result =
+    for index, item in enumerate(query_result):
+        json_item = {"id": index, **item}
+        task_pages.append(json_item)
+    return task_pages
 
 def main(global_config, **settings):
     config = Configurator(settings=settings)
