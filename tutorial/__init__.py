@@ -39,7 +39,6 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.info("Service Started...")
 
-push_status = {}
 idle_status = {}
 translation_table = str.maketrans(string.punctuation, '_'*len(string.punctuation))
 all_process_models = {}
@@ -148,36 +147,36 @@ def hello_world(request):
     return {'Hello': 'world'}
 
 
-@view_config(route_name='add', request_method='GET', renderer='json')
-def add(request):
-    pr = add_push_record(timestamp=datetime.now().timestamp(),
-                         push_type="ShareFlow",
-                         push_to="acct:Steve_Li@localhost",
-                         push_content="You are detected to be working on Adding a Forum in Moodle",
-                         additional_info=(("selxbww2kkBRtqx", 0.93), ("selx4j17pcGiIJQ", 0.93)))
-    #redis = get_redis_connection()
-    #redis.expire(pr.pk, 20)
-    pr.expire(20)
-    return {'pk': pr.pk}
-
-
-@view_config(route_name='query', request_method='GET', renderer='json')
-def query(request):
-    if "pk" not in request.params:
-        return {"result": False}
-    pk = request.params.get("pk")
-    result = fetch_push_record(pk)
-    if result:
-        return {"result": True}
-    return {'result': False}
-
-
-@view_config(route_name='delete', request_method='GET', renderer='json')
-def delete(request):
-    if "pk" not in request.params:
-        return {"result": False}
-    outcome = delete_push_record(request.params.get("pk"))
-    return {'result': outcome}
+# @view_config(route_name='add', request_method='GET', renderer='json')
+# def add(request):
+#     pr = add_push_record(timestamp=datetime.now().timestamp(),
+#                          push_type="ShareFlow",
+#                          push_to="acct:Steve_Li@localhost",
+#                          push_content="You are detected to be working on Adding a Forum in Moodle",
+#                          additional_info=(("selxbww2kkBRtqx", 0.93), ("selx4j17pcGiIJQ", 0.93)))
+#     #redis = get_redis_connection()
+#     #redis.expire(pr.pk, 20)
+#     pr.expire(20)
+#     return {'pk': pr.pk}
+#
+#
+# @view_config(route_name='query', request_method='GET', renderer='json')
+# def query(request):
+#     if "pk" not in request.params:
+#         return {"result": False}
+#     pk = request.params.get("pk")
+#     result = fetch_push_record(pk)
+#     if result:
+#         return {"result": True}
+#     return {'result': False}
+#
+#
+# @view_config(route_name='delete', request_method='GET', renderer='json')
+# def delete(request):
+#     if "pk" not in request.params:
+#         return {"result": False}
+#     outcome = delete_push_record(request.params.get("pk"))
+#     return {'result': outcome}
 
 
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
@@ -351,9 +350,21 @@ def task_classification(request):
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
+
     if trace is None or len(trace) < 2:
+        if len(trace) == 0:
+            if user_id not in idle_status:
+                idle_status[user_id] = 0
+            idle_status[user_id] += 1
         logger.warning(f"{user_id}: Not enough trace found - {len(trace)}")
+        if user_id in idle_status:
+            # if an user is idle for a long duration, gradually increase the request interval
+            idle_result = invalid_result.copy()
+            idle_result["interval"] = idle_result["interval"] * ((idle_status[user_id]/12) + 1)
+            return idle_result
         return invalid_result
+    if len(trace) > 0 and user_id in idle_status and idle_status[user_id] > 0:
+        del idle_status[user_id]
     formatted_trace = convert_log_to_formatted(trace)
     # print(formatted_trace["concept:name"].tolist())
     # print(formatted_trace["time:timestamp"].tolist())
@@ -409,25 +420,20 @@ def task_classification(request):
             if shareflow:
                 tids.append(shareflow.pk)
             count += 1
+    else:
+        # randomly select one highest Shareflow if there are multiple matching
+        matched_task_idx = random.choice(list(range(len(matched_tasks))))
+        logger.info(f"Tasks identified for {user_id}: {matched_tasks[matched_task_idx]} with score {match_score}")
+        matched_tasks = [matched_tasks[matched_task_idx]]
+        tids = [tids[matched_task_idx]]
 
-    # logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
-    # return {
-    #     "task_name": "; ".join(matched_tasks),
-    #     "certainty": match_score,
-    #     "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
-    #     "interval": 7000,
-    #     "task_ids": tids
-    # }
-
-    # randomly select one highest Shareflow if there are multiple matching
-    matched_task_idx = random.choice(list(range(len(matched_tasks))))
-    logger.info(f"Tasks identified for {user_id}: {matched_tasks[matched_task_idx]} with score {match_score}")
+    logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
     return {
-        "task_name": matched_tasks[matched_task_idx],
+        "task_name": "; ".join(matched_tasks),
         "certainty": match_score,
-        "message": "The following tasks may be relevant: " + matched_tasks[matched_task_idx],
+        "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
         "interval": 7000,
-        "task_ids": tids[matched_task_idx]
+        "task_ids": tids
     }
 
 
@@ -533,12 +539,12 @@ def main(global_config, **settings):
     config.include("tutorial.nosql")
 
 
-    userid = "acct:admin@localhost"
-    print(fetch_user_event(userid, 0, 1, "timestamp"))
+    # userid = "acct:admin@localhost"
+    # print(fetch_user_event(userid, 0, 1, "timestamp"))
 
-    config.add_route('query', 'query')
-    config.add_route('add', 'add')
-    config.add_route("delete", "delete")
+    # config.add_route('query', 'query')
+    # config.add_route('add', 'add')
+    # config.add_route("delete", "delete")
     config.add_route('hello', '/')
     config.add_route("create_process_model", "create_process_model")
     config.add_route("delete_process_model", "delete_process_model")
