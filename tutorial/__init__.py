@@ -358,9 +358,12 @@ def task_classification(request):
             idle_status[user_id] += 1
         logger.warning(f"{user_id}: Not enough trace found - {len(trace)}")
         if user_id in idle_status:
-            # if an user is idle for a long duration, gradually increase the request interval
+            # if an user is idle for more than 5 minutes, gradually increase the request interval
             idle_result = invalid_result.copy()
-            idle_result["interval"] = idle_result["interval"] * (int(idle_status[user_id]/12) + 1)
+            multiplier = 1
+            if int(idle_status[user_id]/12) >= 5:
+                multiplier += int(idle_status[user_id]/12)
+            idle_result["interval"] = idle_result["interval"] * multiplier
             return idle_result
         return invalid_result
     if len(trace) > 0 and user_id in idle_status and idle_status[user_id] > 0:
