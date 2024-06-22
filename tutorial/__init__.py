@@ -360,7 +360,7 @@ def task_classification(request):
         if user_id in idle_status:
             # if an user is idle for a long duration, gradually increase the request interval
             idle_result = invalid_result.copy()
-            idle_result["interval"] = idle_result["interval"] * ((idle_status[user_id]/12) + 1)
+            idle_result["interval"] = idle_result["interval"] * (int(idle_status[user_id]/12) + 1)
             return idle_result
         return invalid_result
     if len(trace) > 0 and user_id in idle_status and idle_status[user_id] > 0:
