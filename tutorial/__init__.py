@@ -363,6 +363,7 @@ def task_classification(request):
             multiplier = 1
             if int(idle_status[user_id]/12) >= 5:
                 multiplier += int(idle_status[user_id]/12)
+                logger.warning(f"{user_id} is detected to be inactive for more than 5 minutes")
             idle_result["interval"] = idle_result["interval"] * multiplier
             return idle_result
         return invalid_result
