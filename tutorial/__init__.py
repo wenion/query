@@ -177,6 +177,32 @@ def hello_world(request):
 #     outcome = delete_push_record(request.params.get("pk"))
 #     return {'result': outcome}
 
+@view_config(route_name='delete_all_pm', request_method='POST', renderer='json')
+def delete_all_pm(request):
+    if not request.json_body:
+        return {
+            "message": "Invalid",
+            "deleted": False
+        }
+    if "admin_token" not in request.json_body:
+        return {
+            "message": "Invalid",
+            "deleted": False
+        }
+    if request.json_body["admin_token"] != "STEVESUPERDOPE":
+        return {
+            "message": "Invalid",
+            "deleted": False
+        }
+    pms = fetch_all_process_model()
+    for pm in pms:
+        delete_process_model(pm.pk)
+        logging.info(f"PM {pm.pm_name} from session {pm.session_id} by {pm.creator} deleted")
+    return {
+        "message": "All PM deleted",
+        "deleted": True
+    }
+
 
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
 def create_pm(request):
@@ -548,6 +574,7 @@ def main(global_config, **settings):
     # config.add_route('query', 'query')
     # config.add_route('add', 'add')
     # config.add_route("delete", "delete")
+    config.add_route("delete_all_pm", "delete_all_pm");
     config.add_route('hello', '/')
     config.add_route("create_process_model", "create_process_model")
     config.add_route("delete_process_model", "delete_process_model")
