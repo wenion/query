@@ -37,7 +37,7 @@ logging.Formatter.converter = lambda *args: datetime.now(tz=pytz.timezone('Austr
 #formatter.converter = time.localtime
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.info("Service Started...")
+logger.info("Service Starting...")
 
 idle_status = {}
 translation_table = str.maketrans(string.punctuation, '_'*len(string.punctuation))
@@ -562,7 +562,7 @@ def main(global_config, **settings):
     # config.registry["tokenizer"] = tokenizer
     # config.registry["model"] = model
     # config.registry["kid_content_dict"] = kid_content_dict
-
+    logger.info("Connecting to Redis...")
     config.include("pyramid_jinja2")
     # config.include("tutorial.db")
     config.include("tutorial.nosql")
@@ -586,4 +586,5 @@ def main(global_config, **settings):
     load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
     config.scan()
+    logger.info("Service started!!")
     return config.make_wsgi_app()
