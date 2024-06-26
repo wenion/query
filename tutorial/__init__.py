@@ -582,6 +582,7 @@ def main(global_config, **settings):
     config.add_route("compare_against_pms", "compare_against_pms")
     config.add_route("get_trace_for_session", "get_trace_for_session")
     config.add_route("view_all_task_pages", "view_all_task_pages")
+    logger.info("Loading Process Models...")
     load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
     config.scan()
