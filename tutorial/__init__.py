@@ -31,7 +31,7 @@ from redis_om import get_redis_connection
 
 logger = logging.getLogger("TAD")
 logger.setLevel(logging.INFO)
-handler = RotatingFileHandler("task_classification.log", maxBytes=1024000, backupCount=1000)
+handler = RotatingFileHandler("task_classification.log", maxBytes=5120000, backupCount=5000)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.Formatter.converter = lambda *args: datetime.now(tz=pytz.timezone('Australia/Melbourne')).timetuple()
 #formatter.converter = time.localtime
