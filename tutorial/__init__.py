@@ -204,6 +204,32 @@ def delete_all_pm(request):
     }
 
 
+@view_config(route_name='delete_all_tp', request_method='POST', renderer='json')
+def delete_all_tp(request):
+    if not request.json_body:
+        return {
+            "message": "Invalid",
+            "deleted": False
+        }
+    if "admin_token" not in request.json_body:
+        return {
+            "message": "Invalid",
+            "deleted": False
+        }
+    if request.json_body["admin_token"] != "STEVESUPERDOPE":
+        return {
+            "message": "Invalid",
+            "deleted": False
+        }
+    tps = fetch_all_task_pages()
+    for tp in tps:
+        delete_task_page(tp.pk)
+    return {
+        "message": "All TP deleted",
+        "deleted": True
+    }
+
+
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
 def create_pm(request):
     if not request.json_body:
@@ -574,7 +600,8 @@ def main(global_config, **settings):
     # config.add_route('query', 'query')
     # config.add_route('add', 'add')
     # config.add_route("delete", "delete")
-    config.add_route("delete_all_pm", "delete_all_pm");
+    config.add_route("delete_all_pm", "delete_all_pm")
+    config.add_route("delete_all_tp", "delete_all_tp")
     config.add_route('hello', '/')
     config.add_route("create_process_model", "create_process_model")
     config.add_route("delete_process_model", "delete_process_model")
