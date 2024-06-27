@@ -577,6 +577,8 @@ def get_trace_for_session(request):
 def view_all_task_pages(request):
     task_pages = []
     query_result = fetch_all_task_pages()
+    if not query_result:
+        return task_pages
     for index, item in enumerate(query_result):
         json_item = {"id": index, "url": item.url, "pm_name": item.pm_name}
         task_pages.append(json_item)
