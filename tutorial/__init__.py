@@ -76,6 +76,8 @@ def convert_log_to_formatted(event_log):
             url = row["base_url"]
             if "#" in url:
                 url, _ = url.split("#") # remove the fragment
+            if "?" in url:
+                url, _ = url.split("?") # exclude the query for now
             prefix = "https://"
             if "https://" in url:
                 _, url = url.split("https://", 1)
@@ -90,8 +92,6 @@ def convert_log_to_formatted(event_log):
                     if len(last_part) != 0:
                         last_parts.append(last_part)
                 url = prefix + url
-            if "?" in url:
-                url, _ = url.split("?")
 
             if "?" in row["base_url"]:
                 parsed_url = urlparse(row["base_url"])
