@@ -90,7 +90,11 @@ def convert_log_to_formatted(event_log):
                 params = parse_qs(parsed_url.query)
                 new_params = "?"
                 for key, value in params.items():
-                    new_params += f"{key.translate(translation_table)}&"
+                    nondigit_values = []
+                    for val in value:
+                        if not val.isdigit():
+                            nondigit_values.append(val.translate(translation_table))
+                    new_params += f"{key.translate(translation_table)}_{','.join(nondigit_values)}&"
                     # if key in ["id", "course", "update", "courseid"]:
                     #     new_params += f"{key.translate(translation_table)}&"
                     # else:
