@@ -66,7 +66,6 @@ def convert_log_to_formatted(event_log):
     event_log.sort_values(by=["timestamp"], ascending=[True], inplace=True)
     event_log["time"] = pd.to_datetime(event_log["timestamp"], unit="ms")
     event_log = event_log.reset_index()
-    last_parts = []
     for index, row in event_log.iterrows():
         text_content = ""
         if not pd.isna(row["text_content"]) and row["event_type"] == "click" and row["tag_name"].lower() in ["button", "a", "span"]:
@@ -81,16 +80,9 @@ def convert_log_to_formatted(event_log):
             prefix = "https://"
             if "https://" in url:
                 _, url = url.split("https://", 1)
-                edited = False
                 # remove the last parts that likely are too context specific
-                for part in last_parts:
-                    if part in url:
-                        url = url.replace(part, "")
-                        edited = True
-                if not edited:
-                    url, last_part = url.rsplit("/", 1)  # exclude the last part of the URL as it tends to mean nothing but being too specific
-                    if len(last_part) != 0:
-                        last_parts.append(last_part)
+                url, last_part = url.rsplit("/", 1)  # exclude the last part of the URL as it tends to mean nothing but being too specific
+
                 url = prefix + url
 
             if "?" in row["base_url"]:
