@@ -323,6 +323,7 @@ def create_pm(request):
                 all_domains.add(domain)
     for domain in all_domains:
         add_task_page(url=domain, pm_name=shareflow_name, session_id=session_id)
+        logger.info(f"{domain} added as task page.")
     return {
         "message": "Process model created",
         "created": True
