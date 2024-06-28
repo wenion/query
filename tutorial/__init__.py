@@ -90,9 +90,10 @@ def convert_log_to_formatted(event_log):
                     if len(last_part) != 0:
                         last_parts.append(last_part)
                 url = prefix + url
+            if "?" in url:
+                url, _ = url.split("?")
 
             if "?" in row["base_url"]:
-                url, _ = url.split("?")
                 parsed_url = urlparse(row["base_url"])
                 params = parse_qs(parsed_url.query)
                 new_params = "?"
