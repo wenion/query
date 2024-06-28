@@ -80,8 +80,9 @@ def convert_log_to_formatted(event_log):
             prefix = "https://"
             if "https://" in url:
                 _, url = url.split("https://", 1)
-                # remove the last parts that likely are too context specific
-                url, last_part = url.rsplit("/", 1)  # exclude the last part of the URL as it tends to mean nothing but being too specific
+                if url.count("/") > 1:
+                    # remove the last parts (if there are multiple levels in the URL) that likely are too context specific
+                    url, last_part = url.rsplit("/", 1)
 
                 url = prefix + url
 
