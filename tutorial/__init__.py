@@ -87,10 +87,12 @@ def convert_log_to_formatted(event_log):
                         edited = True
                 if not edited:
                     url, last_part = url.rsplit("/", 1)  # exclude the last part of the URL as it tends to mean nothing but being too specific
-                    last_parts.append(last_part)
+                    if len(last_part) != 0:
+                        last_parts.append(last_part)
                 url = prefix + url
 
             if "?" in row["base_url"]:
+                url, _ = url.split("?")
                 parsed_url = urlparse(row["base_url"])
                 params = parse_qs(parsed_url.query)
                 new_params = "?"
