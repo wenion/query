@@ -399,7 +399,7 @@ def task_classification(request):
         logger.warning(user_id + ": Invalid interval")
         return invalid_result
     current_time = datetime.now()
-    time_ago = current_time - timedelta(seconds=15)
+    time_ago = current_time - timedelta(seconds=10)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
