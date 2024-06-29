@@ -5,7 +5,7 @@ from pyramid.renderers import JSONP
 
 from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
 from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session, fetch_all_task_pages
-from tutorial.nosql import add_push_record, delete_push_record, fetch_push_record
+from tutorial.nosql import add_push_record, delete_push_record, fetch_push_record, fetch_all_push_record
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -586,6 +586,13 @@ def view_all_task_pages(request):
         task_pages.append(json_item)
     return task_pages
 
+
+@view_config(route_name="view_all_push_records", request_method="POST", renderer="json")
+def view_all_push_records(request):
+    query_result = fetch_all_push_record()
+    return query_result
+
+
 def main(global_config, **settings):
     config = Configurator(settings=settings)
     # config.registry["args"] = args
@@ -613,6 +620,7 @@ def main(global_config, **settings):
     config.add_route("compare_against_pms", "compare_against_pms")
     config.add_route("get_trace_for_session", "get_trace_for_session")
     config.add_route("view_all_task_pages", "view_all_task_pages")
+    config.add_route("view_all_push_records", "view_all_push_records")
     logger.info("Loading Process Models...")
     load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
