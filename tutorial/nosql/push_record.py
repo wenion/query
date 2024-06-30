@@ -81,6 +81,7 @@ def fetch_all_push_record():
                              "push_type": record.push_type,
                              "push_to": record.push_to,
                              "push_content": record.push_content,
-                             "additional_info": record.additional_info})
+                             "additional_info": record.additional_info,
+                             "url": record.url})
     return push_records if len(push_records) > 0 else None
 
