@@ -12,30 +12,22 @@ class PushRecord(JsonModel):
         global_key_prefix = 'h'
         model_key_prefix = 'PushRecord'
     timestamp: int = Field(index=True, sortable=True)
-    push_type: str = Field(full_text_search=True, sortable=True)
+    push_type: str = Field(full_text_search=True, sortable=True) # SF - Shareflow, AK - Additional Knowledge, OE - Organisational event
     push_to: str = Field(index=True) #user_id
     push_content: str = Field(full_text_search=True)
+    url: str = Field(index=True, full_text_search=True)
     additional_info: str = Field(full_text_search=True, sortable=True)
 
 
-def add_push_record(timestamp, push_type, push_to, push_content, additional_info):
-    pr = PushRecord(timestamp=timestamp, push_type=push_type, push_to=push_to, push_content=push_content, additional_info=additional_info)
+def add_push_record(timestamp, push_type, push_to, push_content, url, additional_info):
+    pr = PushRecord(timestamp=timestamp,
+                    push_type=push_type,
+                    push_to=push_to,
+                    push_content=push_content,
+                    url=url,
+                    additional_info=additional_info)
     pr.save()
     return pr
-
-
-def fetch_all_push_record():
-    query = PushRecord.find()
-    result = query.all()
-    push_records = []
-    for index, record in enumerate(result):
-        push_records.append({"id": index,
-                             "timestamp": record.timestamp,
-                             "push_type": record.push_type,
-                             "push_to": record.push_to,
-                             "push_content": record.push_content,
-                             "additional_info": record.additional_info})
-    return push_records if len(push_records) > 0 else None
 
 
 def fetch_push_record(pk):
@@ -77,3 +69,4 @@ def same_as_previous(user_id, url, push_type, push_content, additional_info):
     if result.url == url and result.push_type == push_type and result.push_content == push_content and result.additional_info == additional_info:
         return True
     return False
+
