@@ -70,3 +70,17 @@ def same_as_previous(user_id, url, push_type, push_content, additional_info):
         return True
     return False
 
+
+def fetch_all_push_record():
+    query = PushRecord.find()
+    result = query.all()
+    push_records = []
+    for index, record in enumerate(result):
+        push_records.append({"id": index,
+                             "timestamp": record.timestamp,
+                             "push_type": record.push_type,
+                             "push_to": record.push_to,
+                             "push_content": record.push_content,
+                             "additional_info": record.additional_info})
+    return push_records if len(push_records) > 0 else None
+
