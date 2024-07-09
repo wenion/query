@@ -444,7 +444,7 @@ def task_classification(request):
     # "_[SEP]_" is added as a separator, when displaying, it is important to exclude the session ID
     count = 0
     matched_tasks = []
-    tids = []
+    task_details = []
     for key, value in match_scores.items():
         if value == match_score:
             count += 1
@@ -452,7 +452,7 @@ def task_classification(request):
             matched_tasks.append(t_name)
             shareflow = fetch_user_event_record_by_session(t_id)
             if shareflow:
-                tids.append(shareflow.pk)
+                task_details.append({"pk": shareflow.pk, "session_id": shareflow.session_id, "user_id": shareflow.userid})
     # if match_score > 0.9:
     # # same highest scores; TODO: should we show all when we have multiple same highest > 0.9?
     #     logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
@@ -466,7 +466,7 @@ def task_classification(request):
     if match_score <= 0.9:
         # if match score <= 0.9, get top n (max 3) whose score <= 0.9 but >= 0.34
         matched_tasks = []
-        tids = []
+        task_details = []
         count = 0
         for key, value in match_scores.items():
             if count == 3 or value < 0.34:
@@ -475,14 +475,15 @@ def task_classification(request):
             matched_tasks.append(t_name)
             shareflow = fetch_user_event_record_by_session(t_id)
             if shareflow:
-                tids.append(shareflow.pk)
+                task_details.append({"pk": shareflow.pk, "session_id": shareflow.session_id, "user_id": shareflow.userid})
+
             count += 1
     else:
         # randomly select one highest Shareflow if there are multiple matching
         matched_task_idx = random.choice(list(range(len(matched_tasks))))
         logger.info(f"Tasks identified for {user_id}: {matched_tasks[matched_task_idx]} with score {match_score}")
         matched_tasks = [matched_tasks[matched_task_idx]]
-        tids = [tids[matched_task_idx]]
+        task_details = [task_details[matched_task_idx]]
 
     logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
     return {
@@ -490,7 +491,7 @@ def task_classification(request):
         "certainty": match_score,
         "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
         "interval": 7000,
-        "task_ids": tids
+        "task_ids": task_details
     }
 
 
