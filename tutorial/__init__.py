@@ -453,7 +453,10 @@ def task_classification(request):
             matched_tasks.append(t_name)
             shareflow = fetch_user_event_record_by_session(t_id)
             if shareflow:
-                task_details.append({"pk": shareflow.pk, "session_id": shareflow.session_id, "user_id": shareflow.userid})
+                task_details.append({"pk": shareflow.pk,
+                                     "session_id": shareflow.session_id,
+                                     "user_id": shareflow.userid,
+                                     "task_name": shareflow.task_name})
                 tids.append(shareflow.pk)
     # if match_score > 0.9:
     # # same highest scores; TODO: should we show all when we have multiple same highest > 0.9?
@@ -478,7 +481,10 @@ def task_classification(request):
             matched_tasks.append(t_name)
             shareflow = fetch_user_event_record_by_session(t_id)
             if shareflow:
-                task_details.append({"pk": shareflow.pk, "session_id": shareflow.session_id, "user_id": shareflow.userid})
+                task_details.append({"pk": shareflow.pk,
+                                     "session_id": shareflow.session_id,
+                                     "user_id": shareflow.userid,
+                                     "task_name": shareflow.task_name})
                 tids.append(shareflow.pk)
             count += 1
     else:
