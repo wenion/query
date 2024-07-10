@@ -385,7 +385,7 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": []}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": []}
     # get current time
     current_time = datetime.now()
     if "userid" not in request.params:
