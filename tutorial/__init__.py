@@ -499,7 +499,7 @@ def task_classification(request):
     return {
         "task_name": "; ".join(matched_tasks),
         "certainty": match_score,
-        "message": "The following tasks may be relevant: " + "; ".join(matched_tasks),
+        "message": "The following tasks may be relevant: ", # + "; ".join(matched_tasks),
         "interval": 7000,
         "task_ids": tids,
         "task_details": task_details
