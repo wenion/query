@@ -418,9 +418,10 @@ def task_classification(request):
     clean_old_record_from_user(time_threshold, user_id)
 
     time_delta = 11
-    if interval > time_delta:
-        time_delta = interval
-    time_ago = current_time - timedelta(seconds=11)
+    interval_in_second = interval / 1000
+    if interval_in_second > time_delta:
+        time_delta = interval_in_second
+    time_ago = current_time - timedelta(seconds=time_delta)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
