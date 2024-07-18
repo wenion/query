@@ -501,7 +501,7 @@ def task_classification(request):
     return {
         "task_name": "; ".join(matched_tasks),
         "certainty": match_score,
-        "message": "Need help with this task? The following ShareFlows from your colleagues might be useful: ", # + "; ".join(matched_tasks),
+        "message": "The following ShareFlows from your colleagues might be useful: ", # + "; ".join(matched_tasks),
         "interval": interval * 2,
         "task_ids": tids,
         "task_details": task_details
