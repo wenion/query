@@ -31,6 +31,16 @@ def add_push_record(timestamp, push_type, push_to, push_content, url, additional
     return pr
 
 
+def clean_old_record_from_user(time_threshold, user_id):
+    # manual cleaning of old records
+    query = PushRecord.find(
+        (PushRecord.push_to == user_id) &
+        (PushRecord.timestamp <= time_threshold))
+    result = query.all()
+    for record in result:
+        delete_push_record(record.pk)
+
+
 def fetch_push_record(pk):
     query = PushRecord.find(PushRecord.pk == pk)
     result = query.all()

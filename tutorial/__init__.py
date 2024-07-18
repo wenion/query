@@ -9,7 +9,7 @@ from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_eve
     fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, \
     delete_process_model_by_session_creator, fetch_all_process_model, same_as_previous
 from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session, fetch_all_task_pages
-from tutorial.nosql import add_push_record, delete_push_record, fetch_push_record, fetch_all_push_record
+from tutorial.nosql import add_push_record, delete_push_record, fetch_push_record, fetch_all_push_record, clean_old_record_from_user
 from tutorial.nosql import is_task_page, stop_pushing
 
 import pandas as pd
@@ -392,7 +392,7 @@ def delete_pm(request):
 def task_classification(request):
     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": -1, "task_ids": [], "task_details": [], "show_flag": False}
     next_request_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": [], "show_flag": False}
-    if "url" not in request.params or not is_task_page(request.params.get("url")):
+    if "url" not in request.params:# or not is_task_page(request.params.get("url")):
         # if url information is not provided or if the provided url is not a task page
         logger.warning("Invalid URL information!")
         return invalid_result
@@ -413,7 +413,7 @@ def task_classification(request):
         return {"task_name": "", "certainty": 0, "message": "", "interval": 60000, "task_ids": [], "task_details": [], "show_flag": False}
 
     current_time = datetime.now()
-    time_ago = current_time - timedelta(seconds=10)
+    time_ago = current_time - timedelta(seconds=11)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
@@ -526,7 +526,7 @@ def task_classification(request):
                          push_content=push_message,
                          url=url,
                          additional_info=json.dumps(task_details))
-    pr.expire(360) # the push records are stored for 6 minutes, then expire
+    #pr.expire(360) # the push records are stored for 6 minutes, then expire
 
     logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
     return {
