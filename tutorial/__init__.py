@@ -413,14 +413,14 @@ def task_classification(request):
         return {"task_name": "", "certainty": 0, "message": "", "interval": 60000, "task_ids": [], "task_details": [], "show_flag": False}
 
     current_time = datetime.now()
-    # time_threshold = current_time - timedelta(minutes=6)
-    # time_threshold = int(time_threshold.timestamp() * 1000)
-    # clean_old_record_from_user(time_threshold, user_id)
+    time_threshold = current_time - timedelta(minutes=6)
+    time_threshold = int(time_threshold.timestamp() * 1000)
+    clean_old_record_from_user(time_threshold, user_id)
 
     time_delta = 11
     if interval > time_delta:
         time_delta = interval
-    time_ago = current_time - timedelta(seconds=time_delta)
+    time_ago = current_time - timedelta(seconds=11)
     time_ago = int(time_ago.timestamp() * 1000)
     result = fetch_all_user_event_within_time(user_id, time_ago)
     trace = pd.DataFrame(result["table_result"])
@@ -444,6 +444,7 @@ def task_classification(request):
     if len(trace) > 0 and user_id in idle_status and idle_status[user_id] > 0:
         del idle_status[user_id]
     formatted_trace = convert_log_to_formatted(trace)
+
     # print(formatted_trace["concept:name"].tolist())
     # print(formatted_trace["time:timestamp"].tolist())
     match_scores = {}
