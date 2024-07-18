@@ -390,7 +390,6 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    print("Accepting request.")
     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": -1, "task_ids": [], "task_details": [], "show_flag": False}
     next_request_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": [], "show_flag": False}
     if "url" not in request.params:# or not is_task_page(request.params.get("url")):
@@ -398,7 +397,6 @@ def task_classification(request):
         logger.warning("Invalid URL information!")
         return invalid_result
     url = request.params.get("url")
-    print(url)
     if "userid" not in request.params:
         logger.warning("Invalid user information!")
         return invalid_result
