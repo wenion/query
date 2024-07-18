@@ -397,6 +397,7 @@ def task_classification(request):
         logger.warning("Invalid URL information!")
         return invalid_result
     url = request.params.get("url")
+    print(url)
     if "userid" not in request.params:
         logger.warning("Invalid user information!")
         return invalid_result
