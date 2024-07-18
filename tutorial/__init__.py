@@ -394,9 +394,11 @@ def task_classification(request):
     next_request_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": [], "show_flag": False}
     if "url" not in request.params or not is_task_page(request.params.get("url")):
         # if url information is not provided or if the provided url is not a task page
+        logger.warning("Invalid URL information!")
         return invalid_result
     url = request.params.get("url")
     if "userid" not in request.params:
+        logger.warning("Invalid user information!")
         return invalid_result
     user_id = request.params.get("userid")
     interval = 5000
