@@ -1,11 +1,16 @@
+import json
+
 from pyramid.config import Configurator
 from pyramid.response import Response
 from pyramid.view import view_config
 from pyramid.renderers import JSONP
 
-from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, delete_process_model_by_session_creator, fetch_all_process_model
+from tutorial.nosql import fetch_user_event, fetch_all_user_event, fetch_all_events_by_task_name, \
+    fetch_all_user_events_by_session, fetch_all_user_event_within_time, create_process_model, \
+    delete_process_model_by_session_creator, fetch_all_process_model, same_as_previous
 from tutorial.nosql import add_task_page, delete_task_page, delete_task_page_name_id, fetch_user_event_record_by_session_id, delete_process_model, fetch_all_user_event_record, fetch_user_event_record_by_session, fetch_all_task_pages
 from tutorial.nosql import add_push_record, delete_push_record, fetch_push_record, fetch_all_push_record
+from tutorial.nosql import is_task_page, stop_pushing
 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -385,19 +390,26 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": []}
-    # get current time
-    current_time = datetime.now()
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": -1, "task_ids": [], "task_details": []}
+    next_request_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": []}
+    if "url" not in request.params or not is_task_page(request.params.get("url")):
+        # if url information is not provided or if the provided url is not a task page
+        return invalid_result
+    url = request.params.get("url")
     if "userid" not in request.params:
         return invalid_result
     user_id = request.params.get("userid")
-    interval = 10000
+    interval = 5000
     if "interval" in request.params:
         interval = request.params.get("interval")
         interval = int(interval)
     if interval == 0:
         logger.warning(user_id + ": Invalid interval")
-        return invalid_result
+        return next_request_result
+    if stop_pushing(url, user_id):
+        logger.info(user_id + ": Stop pushing criteria matched")
+        return {"task_name": "", "certainty": 0, "message": "", "interval": 60000, "task_ids": [], "task_details": []}
+
     current_time = datetime.now()
     time_ago = current_time - timedelta(seconds=10)
     time_ago = int(time_ago.timestamp() * 1000)
@@ -412,14 +424,14 @@ def task_classification(request):
         logger.warning(f"{user_id}: Not enough trace found - {len(trace)}")
         if user_id in idle_status:
             # if an user is idle for more than 5 minutes, gradually increase the request interval
-            idle_result = invalid_result.copy()
+            idle_result = next_request_result.copy()
             multiplier = 1
             if int(idle_status[user_id]/12) >= 5:
                 multiplier += int(idle_status[user_id]/12)
                 logger.warning(f"{user_id} is detected to be inactive for more than 5 minutes")
             idle_result["interval"] = idle_result["interval"] * multiplier
             return idle_result
-        return invalid_result
+        return next_request_result
     if len(trace) > 0 and user_id in idle_status and idle_status[user_id] > 0:
         del idle_status[user_id]
     formatted_trace = convert_log_to_formatted(trace)
@@ -438,7 +450,7 @@ def task_classification(request):
     # not pushing if all match scores below threshold
     if match_score < 0.34:
         logger.warning(user_id + ": No task matching")
-        return invalid_result
+        return next_request_result
 
     # in the process model dictionary storing all PMs in the current session, the keys are <PM_name>_[SEP]_<session_id>
     # "_[SEP]_" is added as a separator, when displaying, it is important to exclude the session ID
@@ -496,12 +508,29 @@ def task_classification(request):
         matched_tasks = [matched_tasks[matched_task_idx]]
         task_details = [task_details[matched_task_idx]]
         tids = [tids[matched_task_idx]]
+    push_message = "The following ShareFlows from your colleagues might be useful: "
+    same = same_as_previous(user_id=user_id,
+                            url=url,
+                            push_type="SF",
+                            push_content=push_message,
+                            additional_info=json.dumps(task_details))
+    if same:
+        logger.info(user_id + ": Same task identified as in previous Shareflow Push; the current one won't be pushed")
+        return next_request_result
+
+    pr = add_push_record(timestamp=datetime.now().timestamp(),
+                         push_type="SF",
+                         push_to=user_id,
+                         push_content=push_message,
+                         url=url,
+                         additional_info=json.dumps(task_details))
+    pr.expire(360) # the push records are stored for 6 minutes, then expire
 
     logger.info(f"Tasks identified for {user_id}: {'; '.join(matched_tasks)} with score {match_score}")
     return {
         "task_name": "; ".join(matched_tasks),
         "certainty": match_score,
-        "message": "The following ShareFlows from your colleagues might be useful: ", # + "; ".join(matched_tasks),
+        "message": push_message,
         "interval": interval * 2,
         "task_ids": tids,
         "task_details": task_details
