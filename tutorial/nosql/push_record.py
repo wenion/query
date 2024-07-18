@@ -77,8 +77,17 @@ def same_as_previous(user_id, url, push_type, push_content, additional_info):
         if not result or len(result) != 1:
             return False
         result = result[0]
-        if result.url == url and result.push_type == push_type and result.push_content == push_content and result.additional_info == additional_info:
-            return True
+        if result.url == url and result.push_type == push_type and result.push_content == push_content:
+            previous_set = set()
+            for val in json.loads(result.additional_info):
+                if "pk" in val:
+                    previous_set.add(val["pk"])
+            current_set = set()
+            for val in json.loads(additional_info):
+                if "pk" in val:
+                    current_set.add(val["pk"])
+            if previous_set == current_set:
+                return True
         return False
     except:
         return False
