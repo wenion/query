@@ -390,8 +390,8 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
-    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": -1, "task_ids": [], "task_details": []}
-    next_request_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": []}
+    invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": -1, "task_ids": [], "task_details": [], "show_flag": False}
+    next_request_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": [], "show_flag": False}
     if "url" not in request.params or not is_task_page(request.params.get("url")):
         # if url information is not provided or if the provided url is not a task page
         return invalid_result
@@ -408,7 +408,7 @@ def task_classification(request):
         return next_request_result
     if stop_pushing(url, user_id):
         logger.info(user_id + ": Stop pushing criteria matched")
-        return {"task_name": "", "certainty": 0, "message": "", "interval": 60000, "task_ids": [], "task_details": []}
+        return {"task_name": "", "certainty": 0, "message": "", "interval": 60000, "task_ids": [], "task_details": [], "show_flag": False}
 
     current_time = datetime.now()
     time_ago = current_time - timedelta(seconds=10)
@@ -533,7 +533,8 @@ def task_classification(request):
         "message": push_message,
         "interval": interval * 2,
         "task_ids": tids,
-        "task_details": task_details
+        "task_details": task_details,
+        "show_flag": True
     }
 
 
