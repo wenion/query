@@ -413,9 +413,9 @@ def task_classification(request):
         return {"task_name": "", "certainty": 0, "message": "", "interval": 60000, "task_ids": [], "task_details": [], "show_flag": False}
 
     current_time = datetime.now()
-    time_ago = current_time - timedelta(minutes=6)
-    time_ago = int(time_ago.timestamp() * 1000)
-    clean_old_record_from_user(time_ago, user_id)
+    time_threshold = current_time - timedelta(minutes=6)
+    time_threshold = int(time_threshold.timestamp() * 1000)
+    clean_old_record_from_user(time_threshold, user_id)
 
     time_delta = 11
     if interval > time_delta:
