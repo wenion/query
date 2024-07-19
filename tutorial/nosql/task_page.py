@@ -30,8 +30,10 @@ def fetch_task_page_name_id(pm_name, session_id):
 
 def add_task_page(url, pm_name, session_id):
     page = fetch_task_page_name_id(pm_name, session_id)
-    if page and page.url == url:
-        return page
+    if page:
+        for p in page:
+            if p.url == url:
+                return p
     page = TaskPage(url=url, pm_name=pm_name, session_id=session_id)
     page.save()
     return page
