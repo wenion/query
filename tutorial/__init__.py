@@ -426,7 +426,7 @@ def task_classification(request):
 
     current_time = datetime.now()
     time_threshold = current_time - timedelta(minutes=6)
-    time_threshold = int(time_threshold.timestamp() * 1000)
+    time_threshold = int(time_threshold.timestamp())
     clean_old_record_from_user(time_threshold, user_id)
 
     if stop_pushing(url, user_id):
