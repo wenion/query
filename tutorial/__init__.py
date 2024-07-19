@@ -238,11 +238,11 @@ def delete_all_tp(request):
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
 def create_pm(request):
     # disabled during evaluation
-    # if True:
-    #     return {
-    #         "message": "Disabled during evaluation",
-    #         "created": False
-    #     }
+    if True:
+        return {
+            "message": "Disabled during evaluation",
+            "created": False
+        }
     if not request.json_body:
         return {
             "message": "Invalid data",
@@ -345,11 +345,11 @@ def create_pm(request):
 @view_config(route_name="delete_process_model", request_method="POST", renderer="json")
 def delete_pm(request):
     # disable functionality for evaluation
-    # if True:
-    #     return {
-    #         "message": "Disabled during evaluation",
-    #         "removed": False
-    #     }
+    if True:
+        return {
+            "message": "Disabled during evaluation",
+            "removed": False
+        }
 
     if not request.json_body:
         return {
