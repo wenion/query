@@ -237,6 +237,12 @@ def delete_all_tp(request):
 
 @view_config(route_name="create_process_model", request_method="POST", renderer="json")
 def create_pm(request):
+    # disabled during evaluation
+    # if True:
+    #     return {
+    #         "message": "Disabled during evaluation",
+    #         "created": False
+    #     }
     if not request.json_body:
         return {
             "message": "Invalid data",
@@ -338,6 +344,13 @@ def create_pm(request):
 
 @view_config(route_name="delete_process_model", request_method="POST", renderer="json")
 def delete_pm(request):
+    # disable functionality for evaluation
+    # if True:
+    #     return {
+    #         "message": "Disabled during evaluation",
+    #         "removed": False
+    #     }
+
     if not request.json_body:
         return {
             "message": "Invalid data",
@@ -358,6 +371,8 @@ def delete_pm(request):
             "message": "Shareflow name not found. Cannot delete process model",
             "removed": False
         }
+
+
     user_id = request.json_body["user_id"]
     session_id = request.json_body["session_id"]
     shareflow_name = request.json_body["shareflow_name"]
