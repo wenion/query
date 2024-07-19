@@ -62,7 +62,7 @@ def stop_pushing(url, user_id):
     try:
         query = PushRecord.find(PushRecord.push_to == user_id)
         result = query.copy(limit=3).sort_by("-timestamp").execute()
-        if not result or len(result) == 0:
+        if not result or len(result) <= 2:
             return False
         count = 0
         for record in result:

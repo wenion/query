@@ -423,14 +423,15 @@ def task_classification(request):
     if interval == 0:
         logger.warning(user_id + ": Invalid interval")
         return next_request_result
-    if stop_pushing(url, user_id):
-        logger.info(user_id + ": Stop pushing criteria matched")
-        return {"task_name": "", "certainty": 0, "message": "", "interval": 60000, "task_ids": [], "task_details": [], "show_flag": False}
 
     current_time = datetime.now()
     time_threshold = current_time - timedelta(minutes=6)
     time_threshold = int(time_threshold.timestamp() * 1000)
     clean_old_record_from_user(time_threshold, user_id)
+
+    if stop_pushing(url, user_id):
+        logger.info(user_id + ": Stop pushing criteria matched")
+        return {"task_name": "", "certainty": 0, "message": "", "interval": 60000, "task_ids": [], "task_details": [], "show_flag": False}
 
     time_delta = 11
     interval_in_second = interval / 1000
