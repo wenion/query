@@ -394,8 +394,11 @@ def delete_pm(request):
 
 @view_config(route_name="task_classification", request_method="GET", renderer="json")
 def task_classification(request):
+
     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": -1, "task_ids": [], "task_details": [], "show_flag": False}
     next_request_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": [], "show_flag": False}
+    current_time = datetime.now()
+    print(current_time)
     if "url" not in request.params or not is_task_page(request.params.get("url")):
         # if url information is not provided or if the provided url is not a task page
         logger.warning("Invalid URL information!")
@@ -413,7 +416,7 @@ def task_classification(request):
         logger.warning(user_id + ": Invalid interval")
         return next_request_result
 
-    current_time = datetime.now()
+
     time_threshold = current_time - timedelta(minutes=6)
     time_threshold = int(time_threshold.timestamp())
     clean_old_record_from_user(time_threshold, user_id)
