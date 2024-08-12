@@ -412,7 +412,7 @@ def task_classification(request):
         interval = request.params.get("interval")
         interval = int(interval)
     if interval == 0:
-        logger.warning(user_id + ": Invalid interval" + " " + current_time)
+        logger.warning(user_id + ": Invalid interval" + " " + current_time.strftime("%Y-%m-%d %H:%M:%S.%f"))
         return next_request_result
 
 
@@ -438,7 +438,7 @@ def task_classification(request):
             if user_id not in idle_status:
                 idle_status[user_id] = 0
             idle_status[user_id] += 1
-        logger.warning(f"{user_id}: Not enough trace found - {len(trace)}" + " " + current_time)
+        logger.warning(f"{user_id}: Not enough trace found - {len(trace)}" + " " + current_time.strftime("%Y-%m-%d %H:%M:%S.%f"))
         if user_id in idle_status:
             # if an user is idle for more than 5 minutes, gradually increase the request interval
             idle_result = next_request_result.copy()
