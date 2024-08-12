@@ -398,7 +398,6 @@ def task_classification(request):
     invalid_result = {"task_name": "", "certainty": 0, "message": "", "interval": -1, "task_ids": [], "task_details": [], "show_flag": False}
     next_request_result = {"task_name": "", "certainty": 0, "message": "", "interval": 5000, "task_ids": [], "task_details": [], "show_flag": False}
     current_time = datetime.now()
-    print(current_time)
     if "url" not in request.params or not is_task_page(request.params.get("url")):
         # if url information is not provided or if the provided url is not a task page
         logger.warning("Invalid URL information!")
@@ -413,7 +412,7 @@ def task_classification(request):
         interval = request.params.get("interval")
         interval = int(interval)
     if interval == 0:
-        logger.warning(user_id + ": Invalid interval")
+        logger.warning(user_id + ": Invalid interval" + " " + current_time)
         return next_request_result
 
 
@@ -439,7 +438,7 @@ def task_classification(request):
             if user_id not in idle_status:
                 idle_status[user_id] = 0
             idle_status[user_id] += 1
-        logger.warning(f"{user_id}: Not enough trace found - {len(trace)}")
+        logger.warning(f"{user_id}: Not enough trace found - {len(trace)}" + " " + current_time)
         if user_id in idle_status:
             # if an user is idle for more than 5 minutes, gradually increase the request interval
             idle_result = next_request_result.copy()
