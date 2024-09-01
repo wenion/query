@@ -607,7 +607,7 @@ def compare_against_pms(request):
             start_time = end_time
         #fitness = replay_result['average_trace_fitness']
         #match_scores[k] = fitness
-        match_scores[k] = np.mean(all_fitness)
+        match_scores[k] = np.median(all_fitness)
     return {
         "message": f"{user_id}'s session {session_id} successfully compared with all existing PMs",
         "result": match_scores
