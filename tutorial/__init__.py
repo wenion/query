@@ -584,31 +584,45 @@ def compare_against_pms(request):
     trace = pd.DataFrame(result["table_result"])
     formatted_trace = convert_log_to_formatted(trace)
     match_scores = {}
+    start_time = formatted_trace["time:timestamp"].tolist()[0]
+    end_time = start_time + timedelta(seconds=30)
+    first_trace = formatted_trace[(formatted_trace["time:timestamp"]>=start_time) & (formatted_trace["time:timestamp"]<end_time)]
     for k, v in all_process_models.items():
         net, im, fm = v
+
+        # entire trace
         #replay_result = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm,
         #                                                             activity_key="concept:name",
         #                                                             case_id_key="case:concept:name",
         #                                                             timestamp_key="time:timestamp")
-        all_fitness = []
-        start_time = formatted_trace["time:timestamp"].tolist()[0]
-        last_time = formatted_trace["time:timestamp"].tolist()[-1]
-        while True:
-            if start_time > last_time:
-                break
-            end_time = start_time + timedelta(seconds=5)
-            filtered_formatted_trace = formatted_trace[(formatted_trace["time:timestamp"]>=start_time) & (formatted_trace["time:timestamp"]<end_time)]
-            if len(filtered_formatted_trace) != 0:
-                replay_result = pm4py.conformance.fitness_token_based_replay(filtered_formatted_trace, net, im, fm,
-                                                                             activity_key="concept:name",
-                                                                             case_id_key="case:concept:name",
-                                                                             timestamp_key="time:timestamp")
-                all_fitness.append(replay_result["average_trace_fitness"])
-            start_time = end_time
-        #fitness = replay_result['average_trace_fitness']
-        #match_scores[k] = fitness
-        #print(all_fitness)
-        match_scores[k] = np.mean(all_fitness)
+        # fitness = replay_result['average_trace_fitness']
+        # match_scores[k] = fitness
+
+        # first 30 seconds
+        replay_result = pm4py.conformance.fitness_token_based_replay(first_trace, net, im, fm,
+                                                                    activity_key="concept:name",
+                                                                    case_id_key="case:concept:name",
+                                                                    timestamp_key="time:timestamp")
+        fitness = replay_result['average_trace_fitness']
+        match_scores[k] = fitness
+
+        # average every 5 second
+        # all_fitness = []
+        # start_time = formatted_trace["time:timestamp"].tolist()[0]
+        # last_time = formatted_trace["time:timestamp"].tolist()[-1]
+        # while True:
+        #     if start_time > last_time:
+        #         break
+        #     end_time = start_time + timedelta(seconds=5)
+        #     filtered_formatted_trace = formatted_trace[(formatted_trace["time:timestamp"]>=start_time) & (formatted_trace["time:timestamp"]<end_time)]
+        #     if len(filtered_formatted_trace) != 0:
+        #         replay_result = pm4py.conformance.fitness_token_based_replay(filtered_formatted_trace, net, im, fm,
+        #                                                                      activity_key="concept:name",
+        #                                                                      case_id_key="case:concept:name",
+        #                                                                      timestamp_key="time:timestamp")
+        #         all_fitness.append(replay_result["average_trace_fitness"])
+        #     start_time = end_time
+        # match_scores[k] = np.mean(all_fitness)
     return {
         "message": f"{user_id}'s session {session_id} successfully compared with all existing PMs",
         "result": match_scores
