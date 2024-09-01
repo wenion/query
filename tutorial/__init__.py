@@ -599,7 +599,7 @@ def compare_against_pms(request):
             end_time = start_time + timedelta(seconds=5)
             filtered_formatted_trace = formatted_trace[(formatted_trace["time:timestamp"]>=start_time) & (formatted_trace["time:timestamp"]<end_time)]
             if len(filtered_formatted_trace) != 0:
-                replay_result = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm,
+                replay_result = pm4py.conformance.fitness_token_based_replay(filtered_formatted_trace, net, im, fm,
                                                                              activity_key="concept:name",
                                                                              case_id_key="case:concept:name",
                                                                              timestamp_key="time:timestamp")
@@ -607,8 +607,8 @@ def compare_against_pms(request):
             start_time = end_time
         #fitness = replay_result['average_trace_fitness']
         #match_scores[k] = fitness
-        print(all_fitness)
-        match_scores[k] = np.median(all_fitness)
+        #print(all_fitness)
+        match_scores[k] = np.mean(all_fitness)
     return {
         "message": f"{user_id}'s session {session_id} successfully compared with all existing PMs",
         "result": match_scores
