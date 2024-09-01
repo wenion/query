@@ -591,7 +591,7 @@ def compare_against_pms(request):
         #                                                             case_id_key="case:concept:name",
         #                                                             timestamp_key="time:timestamp")
         all_fitness = []
-        start_time = formatted_trace["timt:timestamp"].tolist()[0]
+        start_time = formatted_trace["time:timestamp"].tolist()[0]
         while True:
             end_time = start_time + timedelta(seconds=5)
             filtered_formatted_trace = formatted_trace[(formatted_trace["time:timestamp"]>=start_time) & (formatted_trace["time:timestamp"]<end_time)]
