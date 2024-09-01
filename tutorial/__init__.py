@@ -592,7 +592,10 @@ def compare_against_pms(request):
         #                                                             timestamp_key="time:timestamp")
         all_fitness = []
         start_time = formatted_trace["time:timestamp"].tolist()[0]
+        last_time = formatted_trace["time:timestamp"].tolist()[-1]
         while True:
+            if start_time > last_time:
+                break
             end_time = start_time + timedelta(seconds=5)
             filtered_formatted_trace = formatted_trace[(formatted_trace["time:timestamp"]>=start_time) & (formatted_trace["time:timestamp"]<end_time)]
             if len(filtered_formatted_trace) != 0:
@@ -601,6 +604,7 @@ def compare_against_pms(request):
                                                                              case_id_key="case:concept:name",
                                                                              timestamp_key="time:timestamp")
                 all_fitness.append(replay_result["average_trace_fitness"])
+            start_time = end_time
         #fitness = replay_result['average_trace_fitness']
         #match_scores[k] = fitness
         match_scores[k] = np.mean(all_fitness)
