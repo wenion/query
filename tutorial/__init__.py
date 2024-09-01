@@ -586,12 +586,24 @@ def compare_against_pms(request):
     match_scores = {}
     for k, v in all_process_models.items():
         net, im, fm = v
-        replay_result = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm,
-                                                                     activity_key="concept:name",
-                                                                     case_id_key="case:concept:name",
-                                                                     timestamp_key="time:timestamp")
-        fitness = replay_result['perc_fit_traces']
-        match_scores[k] = fitness
+        #replay_result = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm,
+        #                                                             activity_key="concept:name",
+        #                                                             case_id_key="case:concept:name",
+        #                                                             timestamp_key="time:timestamp")
+        all_fitness = []
+        start_time = formatted_trace["timt:timestamp"].tolist()[0]
+        while True:
+            end_time = start_time + timedelta(seconds=5)
+            filtered_formatted_trace = formatted_trace[(formatted_trace["time:timestamp"]>=start_time) & (formatted_trace["time:timestamp"]<end_time)]
+            if len(filtered_formatted_trace) != 0:
+                replay_result = pm4py.conformance.fitness_token_based_replay(formatted_trace, net, im, fm,
+                                                                             activity_key="concept:name",
+                                                                             case_id_key="case:concept:name",
+                                                                             timestamp_key="time:timestamp")
+                all_fitness.append(replay_result["average_trace_fitness"])
+        #fitness = replay_result['average_trace_fitness']
+        #match_scores[k] = fitness
+        match_scores[k] = np.mean(all_fitness)
     return {
         "message": f"{user_id}'s session {session_id} successfully compared with all existing PMs",
         "result": match_scores
