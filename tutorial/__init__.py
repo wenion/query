@@ -590,7 +590,7 @@ def compare_against_pms(request):
                                                                      activity_key="concept:name",
                                                                      case_id_key="case:concept:name",
                                                                      timestamp_key="time:timestamp")
-        fitness = replay_result['average_trace_fitness']
+        fitness = replay_result['log_fitness']
         match_scores[k] = fitness
     return {
         "message": f"{user_id}'s session {session_id} successfully compared with all existing PMs",
