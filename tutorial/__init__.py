@@ -274,7 +274,8 @@ def create_pm(request):
             "created": False
         }
     trace = pd.DataFrame(result["table_result"])
-    trace = trace[trace["id"] not in [6, 7, 8, 9]]
+    print(trace.head(5))
+    #trace = trace[trace["id"] not in [6, 7, 8, 9]]
     trace = trace[(trace["tag_name"] != "RECORD") & (~trace["tag_name"].str.startswith("HYPOTHESIS"))] # filter out RECORD events and extension events
     trace = trace[~trace["base_url"].str.contains("docs.google.com")] # exclude google related events; to be removed in actual evaluation TODO
     net, im, fm = create_process_model_from_log(trace)
