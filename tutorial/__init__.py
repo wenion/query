@@ -56,8 +56,8 @@ def load_all_process_models():
             record = fetch_user_event_record_by_session_id(session_id=pm.session_id, userid=pm.creator)
             if not record:
                 # if Shareflow doesn't exist, delete the PM
-                delete_process_model(pm.pk)
-                print(f"{pm.pm_name} {pm.session_id} {pm.creator} NOT FOUND UPON CHECKING AND DELETED")
+                #delete_process_model(pm.pk)
+                #print(f"{pm.pm_name} {pm.session_id} {pm.creator} NOT FOUND UPON CHECKING AND DELETED")
                 continue
             pm_string = pm.pm_content
             net, im, fm = pnml_importer.deserialize(pm_string, parameters={"auto_guess_final_marking": False, "encoding": DEFAULT_ENCODING})
