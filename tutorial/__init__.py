@@ -723,6 +723,7 @@ def main(global_config, **settings):
     config.add_route("get_trace_for_session", "get_trace_for_session")
     config.add_route("view_all_task_pages", "view_all_task_pages")
     config.add_route("view_all_push_records", "view_all_push_records")
+    config.add_route("view_all_shareflow", "view_all_shareflow")
     logger.info("Loading Process Models...")
     load_all_process_models()
     #config.add_route("get_all_message", "get_all_message")
