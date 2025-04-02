@@ -629,6 +629,15 @@ def compare_against_pms(request):
     }
 
 
+@view_config(route_name="view_all_shareflow", request_method="POST", renderer='string')
+def view_all_shareflow(request):
+    all = fetch_all_user_event_record()
+    results = []
+    for val in all:
+        results.append((val.userid, val.session_id))
+    return results
+
+
 @view_config(route_name='get_trace_for_session', request_method="POST", renderer='string')
 def get_trace_for_session(request):
     if not request.json_body:
