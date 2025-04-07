@@ -18,11 +18,19 @@ class DSI:
 """
 class DSI:
     def __init__(self, settings):
-        print("DSI ...")
+        yaml_config = settings["config"]
+        bert_base_uncased_config = settings["bert-base-uncased"]
+        id_vocab_config = settings["id_vocab"]
+        fine_tune_checkpoint_title_config = settings["fine_tune_checkpoint_title"]
+        all_docid_knowledge_config = settings["all_docid_knowledge"]
+
+        print("settings", settings)
+
         # self.config = yaml.load(open('./config.yaml', 'r'), Loader=yaml.Loader)
         yaml = YAML()
         # Load YAML data from a filewith 
-        with open('./config.yaml', 'r') as yaml_file:
+        # with open('./config.yaml', 'r') as yaml_file:
+        with open(yaml_config, 'r') as yaml_file:
              self.config=yaml.load(yaml_file)
         #print("loaded config.yaml")     
         #self.device = torch.device('cuda')
@@ -30,18 +38,20 @@ class DSI:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
         #print ("cuda enviroment is detected ..")
-        self.tokenizer = BertTokenizer.from_pretrained('./bert-base-uncased', local_files_only=True)
+        # self.tokenizer = BertTokenizer.from_pretrained('./data/bert-base-uncased', local_files_only=True)
+        self.tokenizer = BertTokenizer.from_pretrained(bert_base_uncased_config, local_files_only=True)
         #print("trying loading the tokenizer from Hugging Face with the pretrained vocabulary from bert-base-uncased ...")
-        #self.ids_tokenizer = Dec_Tokenizer.from_pretrained('./id_vocab.txt')
-        self.ids_tokenizer = BertTokenizer.from_pretrained('./id_vocab.txt')
+        # self.ids_tokenizer = BertTokenizer.from_pretrained('./id_vocab.txt')
+        self.ids_tokenizer = BertTokenizer.from_pretrained(id_vocab_config)
         #print("Loads vocabulary from a local file: './id_vocab.txt'")
 
         print("DSI initial...")
-        model = ALBEF2(config=self.config, text_encoder='bert-base-uncased', text_decoder='bert-base-uncased', ids_tokenizer=self.ids_tokenizer, tokenizer=self.tokenizer)
+        # model = ALBEF2(config=self.config, text_encoder='bert-base-uncased', text_decoder='bert-base-uncased', ids_tokenizer=self.ids_tokenizer, tokenizer=self.tokenizer)
+        model = ALBEF2(config=self.config, text_encoder=bert_base_uncased_config, text_decoder=bert_base_uncased_config, ids_tokenizer=self.ids_tokenizer, tokenizer=self.tokenizer)
         self.model = model.to(self.device)   
         
         print('load checkpoint')
-        checkpoint = torch.load('./fine_tune_checkpoint_title_58.pth', map_location='cpu') 
+        checkpoint = torch.load(fine_tune_checkpoint_title_config, map_location='cpu')
         state_dict = checkpoint['model']
         pos_embed_reshaped = interpolate_pos_embed(state_dict['visual_encoder.pos_embed'],model.visual_encoder)         
         state_dict['visual_encoder.pos_embed'] = pos_embed_reshaped
@@ -55,7 +65,7 @@ class DSI:
         self.retrieval_token_id = self.ids_tokenizer.convert_tokens_to_ids('retrieval')
         
         # with open('docid_title_pair.json', 'r') as file:
-        with open('all_docid_knowledge.json', 'r') as file:
+        with open(all_docid_knowledge_config, 'r') as file:
             self.id_title_dict = json.load(file)
             # print(self.id_title_dict)
         
@@ -71,7 +81,7 @@ class DSI:
             pred_id = " ".join(pred_id[1:]) 
 
             if pred_id in self.id_title_dict.keys():
-                print(self.id_title_dict[pred_id])
+                # print(self.id_title_dict[pred_id])
                 pred_ids.append(self.id_title_dict[pred_id])
 
         return pred_ids#, response_ids

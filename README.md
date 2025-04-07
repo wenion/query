@@ -1,11 +1,11 @@
-## Conda command
+## Conda command (Deprecated)
 conda env create -f environment.yml
 conda env list
 conda activate myenv
 
 conda info
 
-### Updating an environment
+### Updating an environment (Deprecated)
 
 conda create --name myclone --clone myenv
 * myclone - new environment
@@ -15,12 +15,12 @@ conda list -n myenv
 
 conda env remove --name myenv
 
-### Installing packages
+### Installing packages (Deprecated)
 conda install --name myenv scipy
 conda install scipy=0.15.0
 conda install scipy curl
 
-## project structure
+## project structure (Deprecated)
 NCI_model
 |- main.py
 |- infer.py
@@ -33,8 +33,20 @@ NCI_model
       |- templates
          |- mytemplate.jinja2
 
-## install requirements
-python3 -m pip install -r requirements/requirements.txt
+## Building the Docker Image
+docker build -t query:v2.0.0 .
+
+## Installing Requirements
+export PYTHONPATH="/var/lib/hypothesis:$PYTHONPATH"
+export TMPDIR=/app/tmp
+
+## Running the Docker Container
+docker run -d --network=dbs -v /app/query/data:/var/lib/hypothesis/data --env-file env.localhost.list -p 5005:5005 --name query query:v2.0.0
+
+### For Testing (In Docker Container)
+docker run -d --network=dbs -v /home/user/query/data:/var/lib/hypothesis/data -p 5005:5005 --name query query:v2.0.0
+
+gunicorn --paste conf/query.ini --config conf/gunicorn-query.conf.py
 
 ### runing console screen
 screen -S xxx 是创建窗口

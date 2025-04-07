@@ -19,11 +19,11 @@ def configure(environ=None, settings=None):  # pylint: disable=too-many-statemen
     settings_manager = SettingsManager(settings, environ)
 
     # Configuration for external components
-    settings_manager.set("config", "ELASTICSEARCH_URL", required=True)
-    settings_manager.set("bert-base-uncased", "ELASTICSEARCH_URL", required=True)
-    settings_manager.set("id_vocab", "ELASTICSEARCH_URL", required=True)
-    settings_manager.set("fine_tune_checkpoint_title", "ELASTICSEARCH_URL", required=True)
-    settings_manager.set("all_docid_knowledge", "ELASTICSEARCH_URL", required=True)
+    settings_manager.set("config", "CONFIG", required=True)
+    settings_manager.set("bert-base-uncased", "BERT", required=True)
+    settings_manager.set("id_vocab", "ID_VOCAB", required=True)
+    settings_manager.set("fine_tune_checkpoint_title", "CHECKOPINT_TITLE", required=True)
+    settings_manager.set("all_docid_knowledge", "DOCID", required=True)
 
     # Get resolved settings.
     settings = settings_manager.settings

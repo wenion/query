@@ -14,4 +14,5 @@ def create_app(_global_config, **settings):
     config.add_route("query", "query")
 
     config.scan("query.views")
+    print("service is ready!")
     return config.make_wsgi_app()
