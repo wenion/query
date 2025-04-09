@@ -15,9 +15,17 @@ def hello(request):
 def query_dsi(request):
     querying = request.params.get("q")
 
-    print("dsi 1", querying)
+    if not isinstance(querying, str):
+        return []
+
+    if len(querying) == 0:
+        return []
+
     dsi = request.registry["dsi"]
-    print("dsi 2")
-    dsi_result = dsi.gen_id(querying)
-    print("dsi 3")
-    return dsi_result
+    try:
+        dsi_result = dsi.gen_id(querying)
+    except Exception as e:
+        log.error(f"Error in DSI'{str(e)}'")
+        return []
+    else:
+        return dsi_result

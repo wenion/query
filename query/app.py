@@ -1,8 +1,8 @@
-import pyramid
-# from pyramid.config import Configurator
-from pyramid.view import view_config
+import logging
 
 from query.config import configure
+
+log = logging.getLogger(__name__)
 
 
 def create_app(_global_config, **settings):
@@ -14,5 +14,5 @@ def create_app(_global_config, **settings):
     config.add_route("query", "query")
 
     config.scan("query.views")
-    print("service is ready!")
+    log.info("service is ready!")
     return config.make_wsgi_app()
